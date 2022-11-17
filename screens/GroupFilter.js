@@ -1,40 +1,45 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, Dimensions, Platform, View, FlatList, Image, Pressable, TouchableWithoutFeedback } from 'react-native';
-import {  Block, NavBar, Text, Input, theme } from 'galio-framework';
-
-const { height, width } = Dimensions.get('window');
-const iPhoneX = () => Platform.OS === 'ios' && (height === 812 || width === 812 || height === 896 || width === 896);
-
-import { Icon } from '../components/';
-import { Ionicons } from '@expo/vector-icons';
-
-import materialTheme from '../constants/Theme';
-import CommonDataManager from "../core/CommonDataManager";
-import { database } from '../OfflineData/TaskSyncData';
-import { Appearance } from 'react-native';
-import { udatabase } from '../OfflineData/UserAyncDetail';
+import React from "react";
 import {
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  View,
+  FlatList,
+  Image,
+  Pressable,
+  TouchableWithoutFeedback,
+  Appearance,
+} from "react-native";
+import { Block, NavBar, Text, Input, theme } from "galio-framework";
 
-  PieChart,
+const { height, width } = Dimensions.get("window");
+const iPhoneX = () =>
+  Platform.OS === "ios" &&
+  (height === 812 || width === 812 || height === 896 || width === 896);
 
-} from 'react-native-chart-kit';
+import { Icon } from "../components/";
+import { Ionicons } from "@expo/vector-icons";
+import materialTheme from "../constants/Theme";
+import CommonDataManager from "../core/CommonDataManager";
+import { database } from "../OfflineData/TaskSyncData";
+import { udatabase } from "../OfflineData/UserAyncDetail";
+import { PieChart } from "react-native-chart-kit";
 
 export default class GroupFilter extends React.Component {
-
   constructor(props) {
     super(props);
 
     this.state = {
       status: [],
-      filterStatus: '',
+      filterStatus: "",
       statusChart: [],
       groupData: [],
-      isSearchShow: false
-
+      isSearchShow: false,
     };
   }
   componentWillMount() {
-    console.log('First this called');
+    console.log("First this called");
   }
   async componentDidMount() {
     this.setState({ isSearchShow: false });
@@ -47,28 +52,32 @@ export default class GroupFilter extends React.Component {
     let moduleData = await commonData.getModuleDetail();
     //database.getTaskStatusAsync(1);
     if (moduleData == null) {
-      moduleData = await udatabase.getUserDatAsync('moduleData');
+      moduleData = await udatabase.getUserDatAsync("moduleData");
       moduleData = JSON.parse(moduleData.userData);
     }
-    //alert(JSON.stringify(this.props.route.params));
-    const clientModuleAppData = moduleData.filter(e => e.ClientAppID == this.props.route.params.pageData.ClientAppID);;
-    let data = await database.getTaskStatusChartJSONAsync(this.props.route.params.pageData.ClientAppID);
+
+    const clientModuleAppData = moduleData.filter(
+      (e) => e.ClientAppID == this.props.route.params.pageData.ClientAppID
+    );
+    let data = await database.getTaskStatusChartJSONAsync(
+      this.props.route.params.pageData.ClientAppID
+    );
 
     data = data.taskData;
     //alert(JSON.stringify(clientModuleAppData));
     var statusList = [];
     this.setState({ groupData: clientModuleAppData });
-
+    // alert(JSON.stringify(this.props.route.params));
 
     for (let i = 0; i < data.length; i++) {
       data[i].name = data[i].Status;
       data[i].color = this.getColorcode(data[i].Status);
       data[i].legendFontColor = this.getColorcode(data[i].Status);
-      data[i].legendFontSize = '15';
+      data[i].legendFontSize = "15";
 
       var DLData = {
         label: data[i].Status,
-        value: data[i].Status
+        value: data[i].Status,
       };
 
       statusList.push(DLData);
@@ -77,28 +86,31 @@ export default class GroupFilter extends React.Component {
     //alert(JSON.stringify(data));
     this.setState({ statusChart: data });
     this.setState({ status: statusList });
-  }
+  };
 
   movetaskScreen = async (item) => {
     const { navigation } = this.props;
     if (item != null) {
-      if (this.props.route.params.screen && this.props.route.params.screen == 'addtask') {
+      if (
+        this.props.route.params.screen &&
+        this.props.route.params.screen == "addtask"
+      ) {
         //navigation.navigate('Tasks',{GroupAppID:item.GroupAppID});
-        navigation.navigate('AddTask', { pageData: this.props.route.params.pageData, GroupAppID: item.GroupAppID, GroupID: item.GroupID });
+        navigation.navigate("AddTask", {
+          pageData: this.props.route.params.pageData,
+          GroupAppID: item.GroupAppID,
+          GroupID: item.GroupID,
+        });
+      } else {
+        navigation.navigate("Tasks", { GroupAppID: item.GroupAppID });
       }
-      else {
-        navigation.navigate('Tasks', { GroupAppID: item.GroupAppID })
-      }
-
+    } else {
+      navigation.navigate("Tasks", { GroupAppID: 0, Status: "" });
     }
-    else {
-
-      navigation.navigate('Tasks', { GroupAppID: 0, Status: '' })
-    }
-  }
+  };
   getRandomColor(status) {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
+    var letters = "0123456789ABCDEF";
+    var color = "#";
     for (var i = 0; i < 6; i++) {
       color += letters[Math.floor(Math.random() * 16)];
     }
@@ -106,31 +118,19 @@ export default class GroupFilter extends React.Component {
   }
 
   getColorcode(priority) {
-
-    let color = '#089A9C';
+    let color = "#089A9C";
     if (priority) {
-      if (priority.indexOf('Completed') > -1)
-        color = '#089C0B';
-      else if (priority.indexOf('Active') > -1)
-        color = '#8EF50A';
-      else if (priority.indexOf('Being worked on') > -1)
-        color = '#F59F0A';
-      else if (priority.indexOf('New') > -1)
-        color = '#0A27F5';
-      else if (priority.indexOf('Backlog') > -1)
-        color = '#9C1F08';
-      else if (priority.indexOf('Closed') > -1)
-        color = '#69089C';
-      else if (priority.indexOf('General') > -1)
-        color = '#9C0821';
-      else if (priority.indexOf('Failed') > -1)
-        color = '#08969C';
-      else if (priority.indexOf('Deleted') > -1)
-        color = '#82089C';
-      else if (priority.indexOf('Cancelled') > -1)
-        color = '#9C0850';
-      else if (priority.indexOf('Done') > -1)
-        color = '#FF8C00';
+      if (priority.indexOf("Completed") > -1) color = "#089C0B";
+      else if (priority.indexOf("Active") > -1) color = "#8EF50A";
+      else if (priority.indexOf("Being worked on") > -1) color = "#F59F0A";
+      else if (priority.indexOf("New") > -1) color = "#0A27F5";
+      else if (priority.indexOf("Backlog") > -1) color = "#9C1F08";
+      else if (priority.indexOf("Closed") > -1) color = "#69089C";
+      else if (priority.indexOf("General") > -1) color = "#9C0821";
+      else if (priority.indexOf("Failed") > -1) color = "#08969C";
+      else if (priority.indexOf("Deleted") > -1) color = "#82089C";
+      else if (priority.indexOf("Cancelled") > -1) color = "#9C0850";
+      else if (priority.indexOf("Done") > -1) color = "#FF8C00";
     }
     return color;
   }
@@ -143,30 +143,32 @@ export default class GroupFilter extends React.Component {
       const newData = masterDataSource.filter(function (item) {
         const itemData = item.GroupName
           ? item.GroupName.toUpperCase()
-          : ''.toUpperCase();
+          : "".toUpperCase();
         const textData = text.toUpperCase();
         return itemData.indexOf(textData) > -1;
       });
 
       this.setState({ groupData: newData });
-    }
-    else {
+    } else {
       this.setGroupData();
     }
   };
 
   renderRight = () => {
     const { white, title, style, isWhite, navigation, scene } = this.props;
-    <TouchableOpacity style={[styles.searchbutton]} onPress={() => navigation.navigate('Chat')}>
+    <TouchableOpacity
+      style={[styles.searchbutton]}
+      onPress={() => navigation.navigate("Chat")}
+    >
       <Icon
         family="GalioExtra"
         size={16}
         name="chat-33"
-        color={theme.COLORS['ICON']}
+        color={theme.COLORS["ICON"]}
       />
       <Block middle style={styles.notify} />
-    </TouchableOpacity>
-  }
+    </TouchableOpacity>;
+  };
   renderSearch = () => {
     const { navigation } = this.props;
     const { text } = this.state;
@@ -176,11 +178,19 @@ export default class GroupFilter extends React.Component {
         color="black"
         style={styles.search}
         placeholder="What are you looking for?"
-        onChangeText={this.handleSearch} value={text}
-        iconContent={<Icon size={16} color={theme.COLORS.MUTED} name="magnifying-glass" family="entypo" />}
+        onChangeText={this.handleSearch}
+        value={text}
+        iconContent={
+          <Icon
+            size={16}
+            color={theme.COLORS.MUTED}
+            name="magnifying-glass"
+            family="entypo"
+          />
+        }
       />
-    )
-  }
+    );
+  };
   renderHeader = () => {
     return (
       <Block center>
@@ -188,23 +198,21 @@ export default class GroupFilter extends React.Component {
         {/* {options ? this.renderOptions() : null}
               {tabs ? this.renderTabs() : null} */}
       </Block>
-    )
-  }
+    );
+  };
   handleLeftPress = () => {
     const { back, navigation } = this.props;
     navigation.goBack();
-  }
+  };
 
   showSearch = () => {
-
-    if (this.state.isSearchShow)
-      this.setState({ isSearchShow: false })
-    else
-      this.setState({ isSearchShow: true })
-  }
+    if (this.state.isSearchShow) this.setState({ isSearchShow: false });
+    else this.setState({ isSearchShow: true });
+  };
   renderNavigation = () => {
     debugger;
-    const { back, title, white, transparent, navigation, scene, product } = this.props;
+    const { back, title, white, transparent, navigation, scene, product } =
+      this.props;
     //alert(JSON.stringify(this.props.route.params.product.title));
     // const { routeName } = navigation.state;
     // const { options } = scene.descriptor;
@@ -212,7 +220,7 @@ export default class GroupFilter extends React.Component {
     const noShadow = ["Search", "Profile"].includes(title);
     const headerStyles = [
       !noShadow ? styles.shadow : null,
-      transparent ? { backgroundColor: 'rgba(0,0,0,0)' } : null,
+      transparent ? { backgroundColor: "rgba(0,0,0,0)" } : null,
     ];
     return (
       <Block style={headerStyles}>
@@ -244,67 +252,78 @@ export default class GroupFilter extends React.Component {
             <Block flex row shadow>
               <Image
                 title="Filters"
-                source={{ uri: 'https://demo.cityconexx.com.au/assets/images/CITYCONEXX_LOGO_50X50.png' }}
+                source={{
+                  uri: "https://demo.cityconexx.com.au/assets/images/CITYCONEXX_LOGO_50X50.png",
+                }}
                 style={{
-
                   marginBottom: 0,
                   width: 30,
                   height: 30,
                 }}
               />
-              <Text size={18} style={{ fontWeight: 'bold', paddingRight: 5, paddingTop: 5, color: scheme === 'dark' ? 'white' : 'black' }}>  Filters</Text>
+              <Text
+                size={18}
+                style={{
+                  fontWeight: "bold",
+                  paddingRight: 5,
+                  paddingTop: 5,
+                  color: scheme === "dark" ? "white" : "black",
+                }}
+              >
+                {" "}
+                Filters
+              </Text>
             </Block>
           }
-          left={<Block flex row>
-            <TouchableOpacity onPress={() => this.handleLeftPress()}>
-              <Icon
-                size={22}
-                style={{ paddingTop: 20 }}
-                family="entypo"
-                name="chevron-left"
-                color={scheme === 'dark' ? "white" : theme.COLORS['ICON']}
-              />
-
-            </TouchableOpacity>
-          </Block>}
+          left={
+            <Block flex row>
+              <TouchableOpacity onPress={() => this.handleLeftPress()}>
+                <Icon
+                  size={22}
+                  style={{ paddingTop: 20 }}
+                  family="entypo"
+                  name="chevron-left"
+                  color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
+                />
+              </TouchableOpacity>
+            </Block>
+          }
           right={
-            <TouchableOpacity style={[styles.searchbutton]} onPress={() => this.movetaskScreen(null)}>
-
+            <TouchableOpacity
+              style={[styles.searchbutton]}
+              onPress={() => this.movetaskScreen(null)}
+            >
               <Ionicons
                 size={22}
                 family="entypo"
                 name="sync"
-                color={scheme === 'dark' ? "white" : theme.COLORS['ICON']}
+                color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
               />
-
             </TouchableOpacity>
-
           }
-          rightStyle={{ alignItems: 'center' }}
+          rightStyle={{ alignItems: "center" }}
           leftStyle={{ fontSize: 18 }}
           style={styles.navbar}
           onLeftPress={this.handleLeftPress}
-
-
         />
-        { this.state.isSearchShow ? this.renderHeader() : null}
+        {this.state.isSearchShow ? this.renderHeader() : null}
       </Block>
-    )
-  }
+    );
+  };
 
   renderReportItem = ({ item }) => {
     return (
       <Block flex row space="between">
-        <Text style={styles.textcolor}
+        <Text
+          style={styles.textcolor}
           size={theme.SIZES.BASE * 0.86}
-          color={materialTheme.COLORS.CAPTION}>
+          color={materialTheme.COLORS.CAPTION}
+        >
           {item.ReportName}
-
         </Text>
       </Block>
-    )
-
-  }
+    );
+  };
 
   renderStatusItem = ({ item }) => {
     const { navigation } = this.props;
@@ -313,22 +332,23 @@ export default class GroupFilter extends React.Component {
       <Block>
         <Block card shadow style={styles.statusproducts}>
           <Block flex row>
-
             <Block flex style={styles.productDescription}>
-
-
-              <TouchableWithoutFeedback style={styles.statustitle} onPress={() => navigation.navigate('Tasks', { Status: item.Status })}>
-                <Text size={14} style={styles.statustitle}>{item.Status}</Text>
+              <TouchableWithoutFeedback
+                style={styles.statustitle}
+                onPress={() =>
+                  navigation.navigate("Tasks", { Status: item.Status })
+                }
+              >
+                <Text size={14} style={styles.statustitle}>
+                  {item.Status}
+                </Text>
               </TouchableWithoutFeedback>
-
-
             </Block>
           </Block>
-
         </Block>
       </Block>
-    )
-  }
+    );
+  };
   renderItem = ({ item }) => {
     const { navigation } = this.props;
 
@@ -336,24 +356,29 @@ export default class GroupFilter extends React.Component {
       <Block>
         <Block card shadow style={styles.product}>
           <Block flex row>
-
             <Block flex style={styles.productDescription}>
-
-              <Block flex row space="between">
-
-              </Block>
-              <TouchableWithoutFeedback style={styles.title} onPress={() => this.movetaskScreen(item)}>
-                <Text size={17} style={styles.title}>{item.GroupName + '/' + item.ReportMenuLabel + '/' + item.AppName}</Text>
+              <Block flex row space="between"></Block>
+              <TouchableWithoutFeedback
+                style={styles.title}
+                onPress={() => this.movetaskScreen(item)}
+              >
+                <Text size={17} style={styles.title}>
+                  {item.GroupName +
+                    "/" +
+                    item.ReportMenuLabel +
+                    "/" +
+                    item.AppName}
+                </Text>
               </TouchableWithoutFeedback>
 
               <Block>
-                {item.Reports ?
+                {item.Reports ? (
                   <FlatList
                     data={JSON.parse(item.Reports)}
                     keyExtractor={(i, index) => i.ReportID.toString()}
                     renderItem={this.renderReportItem}
                   />
-                  : null}
+                ) : null}
               </Block>
             </Block>
           </Block>
@@ -365,63 +390,129 @@ export default class GroupFilter extends React.Component {
               </Block> */}
         </Block>
       </Block>
-    )
-  }
+    );
+  };
 
   filterStatus(filter) {
     if (filter) {
       const { navigation } = this.props;
-      navigation.navigate('Tasks', { Status: filter.value });
-    }
-    else {
-      navigation.navigate('Tasks', { Status: '' });
+      navigation.navigate("Tasks", { Status: filter.value });
+    } else {
+      navigation.navigate("Tasks", { Status: "" });
     }
     //alert(status);
   }
-  renderProducts = (navigation, scene) => {
+  renderProducts = () => {
     const { back, title, white, transparent } = this.props;
     const noShadow = ["Search", "Profile"];
     const headerStyles = [
       !noShadow ? styles.shadow : null,
-      transparent ? { backgroundColor: 'rgba(0,0,0,0)' } : null,
+      transparent ? { backgroundColor: "rgba(0,0,0,0)" } : null,
     ];
-
 
     const notifications = [
-      { title: "All", id: "0", new: "15", total: "50", critical: "15", high: "20" },
-      { title: "CEVA Truganina", id: "1", new: "5", total: "10", critical: "2", high: "3" },
-      { title: "CEVA VL Truganina", id: "2", new: "5", total: "20", critical: "10", high: "5" },
-      { title: "CEVA Dandenong", id: "3", new: "10", total: "30", critical: "10", high: "10" },
-      { title: "CEVA Mulgrave", id: "4", new: "5", total: "40", critical: "20", high: "15" },
-      { title: "CEVA Orchard Hills", id: "5", new: "25", total: "50", critical: "20", high: "5" },
-      { title: "CEVA Minto", id: "6", new: "40", total: "60", critical: "10", high: "10" },
-      { title: "CEVA Minchinbury", id: "7", new: "50", total: "70", critical: "10", high: "20" },
-      { title: "CEVA Hazelmere", id: "8", new: "50", total: "80", critical: "20", high: "10" },
+      {
+        title: "All",
+        id: "0",
+        new: "15",
+        total: "50",
+        critical: "15",
+        high: "20",
+      },
+      {
+        title: "CEVA Truganina",
+        id: "1",
+        new: "5",
+        total: "10",
+        critical: "2",
+        high: "3",
+      },
+      {
+        title: "CEVA VL Truganina",
+        id: "2",
+        new: "5",
+        total: "20",
+        critical: "10",
+        high: "5",
+      },
+      {
+        title: "CEVA Dandenong",
+        id: "3",
+        new: "10",
+        total: "30",
+        critical: "10",
+        high: "10",
+      },
+      {
+        title: "CEVA Mulgrave",
+        id: "4",
+        new: "5",
+        total: "40",
+        critical: "20",
+        high: "15",
+      },
+      {
+        title: "CEVA Orchard Hills",
+        id: "5",
+        new: "25",
+        total: "50",
+        critical: "20",
+        high: "5",
+      },
+      {
+        title: "CEVA Minto",
+        id: "6",
+        new: "40",
+        total: "60",
+        critical: "10",
+        high: "10",
+      },
+      {
+        title: "CEVA Minchinbury",
+        id: "7",
+        new: "50",
+        total: "70",
+        critical: "10",
+        high: "20",
+      },
+      {
+        title: "CEVA Hazelmere",
+        id: "8",
+        new: "50",
+        total: "80",
+        critical: "20",
+        high: "10",
+      },
     ];
-
+    // alert(JSON.stringify(this.state.status));
 
     return (
-
       <View>
-        <Block style={styles.shadow}>
-          {this.renderNavigation()}
-        </Block>
-        { Platform.OS === 'ios' ?
+        <Block style={styles.shadow}>{this.renderNavigation()}</Block>
+        {Platform.OS === "ios" ? (
           <View flex style={styles.products}>
             <Block left>
-              <Text bold size={theme.SIZES.BASE} style={{ paddingBottom: 5, paddingTop: 5, paddingLeft: 10, color: scheme === "dark" ? "white" : "black" }}>
-                {'Group and Apps'}
+              <Text
+                bold
+                size={theme.SIZES.BASE}
+                style={{
+                  paddingBottom: 5,
+                  paddingTop: 5,
+                  paddingLeft: 10,
+                  color: scheme === "dark" ? "white" : "black",
+                }}
+              >
+                {"Group and Apps"}
               </Text>
-
             </Block>
-
             <Block flex>
-              {this.state.groupData ?
+              {this.state.groupData ? (
                 <FlatList
                   data={this.state.groupData}
                   keyExtractor={(item, index) => item.GroupAppID.toString()}
                   renderItem={this.renderItem}
-                /> : null}
+                />
+              ) : null}
 
               {/* <FlatList
           data={this.state.statusChart}
@@ -432,27 +523,45 @@ export default class GroupFilter extends React.Component {
             <Block>
               <Block>
                 <Block left>
-                  <Text bold size={theme.SIZES.BASE} style={{ paddingBottom: 5, paddingTop: 5, paddingLeft: 10, color: scheme === "dark" ? "white" : "black" }}>
-                    {'Status'}
+                  <Text
+                    bold
+                    size={theme.SIZES.BASE}
+                    style={{
+                      paddingBottom: 5,
+                      paddingTop: 5,
+                      paddingLeft: 10,
+                      color: scheme === "dark" ? "white" : "black",
+                    }}
+                  >
+                    {"Status"}
                   </Text>
-
                 </Block>
                 <Block style={styles.actioncontainer}>
-                  {this.state.status ? this.state.status.map(buttonInfo => {
-                    return (
-                      <Block style={styles.item}>
-                        <Pressable style={styles.smallbutton} onPress={() => this.filterStatus(buttonInfo)}>
-                          <Text size={17} style={styles.smallbuttontext} color={scheme === "dark" ? "white" : "black"}>
-                            {buttonInfo.value}</Text>
-                        </Pressable>
-                        {/* <Button round shadowless small
+                  {this.state.status.size > 0
+                    ? this.state.status.map((buttonInfo) => {
+                        return (
+                          <Block style={styles.item}>
+                            <Pressable
+                              style={styles.smallbutton}
+                              onPress={() => this.filterStatus(buttonInfo)}
+                            >
+                              <Text
+                                size={17}
+                                style={styles.smallbuttontext}
+                                color={scheme === "dark" ? "white" : "black"}
+                              >
+                                {buttonInfo.value}
+                              </Text>
+                            </Pressable>
+                            {/* <Button round shadowless small
                 onPress={ () => this.filterStatus(buttonInfo) }
                 
                 textStyle={styles.actionbutton}
                  >{buttonInfo.value}</Button> */}
-                      </Block>
-                    );
-                  }) : null}
+                          </Block>
+                        );
+                      })
+                    : null}
                 </Block>
                 {/* <RNPickerSelect
                    
@@ -485,63 +594,63 @@ export default class GroupFilter extends React.Component {
 
               <PieChart
                 onDataPointClick={({ index }) => {
-                  alert('this.state.tickers[index]');
+                  alert("this.state.tickers[index]");
                 }}
                 data={this.state.statusChart}
-                width={Dimensions.get('window').width - 16}
+                width={Dimensions.get("window").width - 16}
                 height={220}
                 chartConfig={{
-                  backgroundColor: '#1cc910',
-                  backgroundGradientFrom: '#eff3ff',
-                  backgroundGradientTo: '#efefef',
+                  backgroundColor: "#1cc910",
+                  backgroundGradientFrom: "#eff3ff",
+                  backgroundGradientTo: "#efefef",
                   decimalPlaces: 2,
                   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                   style: {
                     borderRadius: 16,
                   },
-
                 }}
-
                 // style={{
                 //   marginVertical: 8,
                 //   borderRadius: 16,
                 // }}
 
                 accessor="StatusCount"
-              //backgroundColor="transparent"
-              //paddingLeft="15"
-              //absolute //for the absolute number remove if you want percentage
+                //backgroundColor="transparent"
+                //paddingLeft="15"
+                //absolute //for the absolute number remove if you want percentage
               />
             </Block>
           </View>
-          :
-
-          <Block flex
-
-            style={styles.products}>
+        ) : (
+          <Block flex style={styles.products}>
             <Block left>
-              <Text bold size={theme.SIZES.BASE} style={{ paddingBottom: 5, paddingTop: 5, paddingLeft: 10, color: scheme === "dark" ? "white" : "black" }}>
-                {'Group and Apps'}
+              <Text
+                bold
+                size={theme.SIZES.BASE}
+                style={{
+                  paddingBottom: 5,
+                  paddingTop: 5,
+                  paddingLeft: 10,
+                  color: scheme === "dark" ? "white" : "black",
+                }}
+              >
+                {"Group and Apps"}
               </Text>
-
             </Block>
             <Block flex style={styles.notification}>
-              {this.state.groupData ?
+              {this.state.groupData ? (
                 <FlatList
                   data={this.state.groupData}
                   keyExtractor={(item, index) => item.GroupAppID.toString()}
                   renderItem={this.renderItem}
                 />
-                : null}
+              ) : null}
             </Block>
-
           </Block>
-        }
+        )}
       </View>
-
-
-    )
-  }
+    );
+  };
 
   render() {
     return (
@@ -549,7 +658,6 @@ export default class GroupFilter extends React.Component {
         {this.renderProducts()}
       </Block>
     );
-
   }
 }
 
@@ -559,7 +667,7 @@ const pickerSelectStyles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 12,
     paddingHorizontal: 15,
-    textShadowColor: '#f0f',
+    textShadowColor: "#f0f",
     //borderWidth: 1,
     //borderColor: 'gray',
     //borderRadius: 4,
@@ -583,7 +691,7 @@ const pickerSelectStyles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 0.5,
-    borderColor: 'purple',
+    borderColor: "purple",
     borderRadius: 8,
     color: scheme === "dark" ? "white" : "black",
     paddingRight: 30, // to ensure the text is never behind the icon
@@ -604,14 +712,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     borderRadius: 3,
-    color: "black"
+    color: "black",
   },
   header: {
     backgroundColor: scheme === "dark" ? theme.COLORS.WHITE : "#181818",
     shadowColor: scheme === "dark" ? "white" : theme.COLORS.BLACK,
     shadowOffset: {
       width: 0,
-      height: 1
+      height: 1,
     },
     shadowRadius: 8,
     shadowOpacity: 0.6,
@@ -620,7 +728,7 @@ const styles = StyleSheet.create({
   },
 
   navbar: {
-    backgroundColor: scheme === 'dark' ? '#181818' : 'white',
+    backgroundColor: scheme === "dark" ? "#181818" : "white",
     paddingVertical: 0,
     paddingBottom: theme.SIZES.BASE * 1.5,
     paddingTop: iPhoneX ? theme.SIZES.BASE * 4.5 : theme.SIZES.BASE,
@@ -633,12 +741,10 @@ const styles = StyleSheet.create({
   products: {
     width: width - theme.SIZES.BASE * 0,
     paddingVertical: theme.SIZES.BASE * 0,
-
   },
   statusproducts: {
     width: width - theme.SIZES.BASE * 0,
     paddingVertical: 5,
-
   },
   notification: {
     paddingVertical: theme.SIZES.BASE / 3,
@@ -652,8 +758,8 @@ const styles = StyleSheet.create({
   },
   removefilter: {
     marginTop: 0,
-    flexDirection: 'row',
-    textAlign: 'right',
+    flexDirection: "row",
+    textAlign: "right",
     paddingTop: theme.SIZES.BASE / 5,
     paddingBottom: theme.SIZES.BASE * 1.5,
     color: scheme === "dark" ? "white" : "#181818",
@@ -673,19 +779,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.SIZES.BASE,
     marginBottom: theme.SIZES.BASE * 1.25,
     color: scheme === "dark" ? "white" : "#181818",
-  }
-  , product: {
+  },
+  product: {
     backgroundColor: scheme === "dark" ? "#181818" : "white",
     color: scheme === "dark" ? "white" : "#181818",
     marginVertical: theme.SIZES.BASE / 6,
     borderWidth: 0,
     minHeight: 60,
     margin: 0,
-
   },
   productTitle: {
     flex: 1,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     paddingBottom: 0.1,
     color: scheme === "dark" ? "white" : "#181818",
   },
@@ -696,14 +801,14 @@ const styles = StyleSheet.create({
   },
   shadow: {
     backgroundColor: scheme === "dark" ? "white" : "#181818",
-    shadowColor: scheme === "dark" ? "white" : 'black',
+    shadowColor: scheme === "dark" ? "white" : "black",
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     shadowOpacity: 0.2,
     elevation: 3,
   },
   buttonshadow: {
-    shadowColor: scheme === "dark" ? "white" : 'black',
+    shadowColor: scheme === "dark" ? "white" : "black",
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     shadowOpacity: 0.2,
@@ -711,12 +816,12 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: theme.SIZES.BASE,
-    width: width - (theme.SIZES.BASE * 5),
+    width: width - theme.SIZES.BASE * 5,
   },
   searchbutton: {
     paddingLeft: 50,
     paddingTop: 15,
-    position: 'relative',
+    position: "relative",
   },
   options: {
     paddingHorizontal: theme.SIZES.BASE / 2,
@@ -726,34 +831,33 @@ const styles = StyleSheet.create({
     color: scheme === "dark" ? "#17a2b8" : "#181818",
   },
   optionsButton: {
-    width: 'auto',
+    width: "auto",
     height: 32,
     paddingHorizontal: theme.SIZES.BASE,
     paddingVertical: 2,
   },
   button: {
     marginBottom: theme.SIZES.BASE,
-    width: width - (theme.SIZES.BASE * 3),
+    width: width - theme.SIZES.BASE * 3,
   },
   circle: {
     flex: 1,
     width: 44,
     height: 44,
-    borderRadius: 44 / 2
+    borderRadius: 44 / 2,
   },
   headerColor: {
     color: scheme === "dark" ? "white" : "black",
     backgroundColor: scheme === "dark" ? "#181818" : "white",
   },
   spinnerTextStyle: {
-    color: '#FFF',
+    color: "#FFF",
   },
   actioncontainer: {
-
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    marginRight: 10
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+    marginRight: 10,
     //margin :10 // if you want to fill rows left to right
   },
   actionbutton: {
@@ -762,38 +866,37 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontStyle: "normal",
     letterSpacing: -0.29,
-
   },
   filtercolor: {
     color: scheme === "dark" ? "white" : "black",
-  }
-  , smallbutton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  smallbutton: {
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 4,
     elevation: 15,
 
     margin: 3,
-    backgroundColor: 'gray',
+    backgroundColor: "gray",
   },
   smallremovebutton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 4,
     elevation: 15,
 
     margin: 3,
-    backgroundColor: 'gray',
+    backgroundColor: "gray",
   },
   smallbuttontext: {
     fontSize: 16,
     lineHeight: 21,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 0.25,
-    color: 'white',
+    color: "white",
   },
 });

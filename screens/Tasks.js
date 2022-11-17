@@ -2,7 +2,6 @@ import React from "react";
 import {
   StyleSheet,
   Dimensions,
- 
   View,
   FlatList,
   Platform,
@@ -19,27 +18,18 @@ const iPhoneX = () =>
 
 import { Icon } from "../components/";
 
-
-import {
-  AntDesign,
-  MaterialIcons,
-
-  Ionicons,
-  Entypo,
-} from "@expo/vector-icons";
-
+import { AntDesign, MaterialIcons, Ionicons, Entypo } from "@expo/vector-icons";
 
 import DynamicTaskData, {
   requestModel,
-  Loader,
+  // Loader,
   requetActivityModel,
   requetActivityActionModel,
-
   UserReadStatusModel,
 } from "../Data/DynamicTaskData";
 import NetInfo from "@react-native-community/netinfo";
 import { database } from "../OfflineData/TaskSyncData";
-import { Appearance } from 'react-native';
+import { Appearance } from "react-native";
 
 import RenderHtml from "react-native-render-html";
 import { format } from "date-fns";
@@ -93,7 +83,7 @@ export default class Tasks extends React.Component {
   async componentDidMount() {
     //this.loadData();
     this.setState({ searchtext: "" });
-    udatabase.addlog("componentDidMount called");
+    // udatabase.addlog("componentDidMount called");
     this.focusListener = this.props.navigation.addListener("focus", (e) => {
       if (this.props.route.params.GroupAppID)
         this.setState({ groupAppID: this.props.route.params.GroupAppID });
@@ -144,12 +134,11 @@ export default class Tasks extends React.Component {
     data = await database.getTaskDataJSONAsync(
       this.props.route.params.pageData.ClientAppID
     );
-
+    console.log("all data", data.taskData);
     let metadata = await database.getTaskMetaDataJSONAsync(
       this.props.route.params.pageData.ClientAppID
     );
 
-    udatabase.addlog("meta data" + JSON.stringify(metadata));
     let iscalledfromServer = false;
     if (
       type != "updated" &&
@@ -175,20 +164,17 @@ export default class Tasks extends React.Component {
           requestModel.DeltaDateTime = null;
         }
       }
-
       data = data.taskData;
 
       let taskDetail = await database.getTaskDetailCountAsync(
         this.props.route.params.pageData.ClientAppID
       );
-      //alert(JSON.stringify(taskDetail));
       udatabase.addlog(
         "task detail count called" + taskDetail.taskDetailDataCount
       );
       requetActivityModel.GroupAppID =
         this.props.route.params.pageData.GroupAppsList;
       requetActivityModel.AccessLevelID = 30;
-
       let d = [];
       for (let i = 0; i < data.length; i++) {
         let item = JSON.parse(data[i]);
@@ -209,8 +195,9 @@ export default class Tasks extends React.Component {
       this.setState({ taskfullData: d });
     } else if (
       type == "updated" ||
-      data == null ||
-      (data.taskData == null && isConnected)
+      data.taskData == null ||
+      (data.taskData.length == 0 && isConnected)
+      // (data.taskData == null && isConnected)
     ) {
       let metadata = await database.getTaskMetaDataJSONAsync(
         this.props.route.params.pageData.ClientAppID
@@ -227,7 +214,6 @@ export default class Tasks extends React.Component {
       data = await this.loadDataFromServer(pageData, (result) => {
         data = result[1];
         iscalledfromServer = true;
-        udatabase.addlog("loadDataFromServer function called");
 
         let taskDetail = database.getTaskDetailCountAsync(
           this.props.route.params.pageData.ClientAppID
@@ -241,10 +227,14 @@ export default class Tasks extends React.Component {
         requetActivityModel.AccessLevelID = 30;
 
         let d = [];
+        // let details=[];
         for (let i = 0; i < data.length; i++) {
           let item = JSON.parse(data[i]);
           d.push(item);
         }
+
+        //
+
         udatabase.addlog(
           "task detail data count" + taskDetail.taskDetailDataCount
         );
@@ -261,7 +251,7 @@ export default class Tasks extends React.Component {
         if (tasktimer != null) clearInterval(tasktimer);
         //alert(result[0].AutoDeltaRefreshFrequencySeconds);
         if (result[0].AutoDeltaRefreshFrequencySeconds != "") {
-          console.log("tasktimer is registering");
+          // console.log("tasktimer is registering");
           tasktimer = setInterval(() => {
             this.refreshData();
             console.log(
@@ -297,6 +287,7 @@ export default class Tasks extends React.Component {
       udatabase.addlog(
         "task detail count called" + taskDetail.taskDetailDataCount
       );
+
       requetActivityModel.GroupAppID =
         this.props.route.params.pageData.GroupAppsList;
       requetActivityModel.AccessLevelID = 30;
@@ -332,11 +323,11 @@ export default class Tasks extends React.Component {
       }
 
       this.setState({ loading: false });
-      //Loader.isLoading = false;
       this.setState({ taskData: d });
       this.setState({ taskfullData: d });
     });
   }
+
   loadDataFromServer = async (pageData, onservercallback) => {
     this.setState({ loading: true });
     let objData = DynamicTaskData.getInstance();
@@ -530,7 +521,7 @@ export default class Tasks extends React.Component {
     return (
       <Block style={headerStyles}>
         <NavBar
-          style={{...styles.headerColor, ...styles.navbar}}
+          style={styles.headerColor}
           title={
             <Block flex row shadow>
               <Image
@@ -563,8 +554,8 @@ export default class Tasks extends React.Component {
             </Block>
           }
           rightStyle={{ alignItems: "center" }}
-          leftStyle={{ paddingTop: 3, flex: 0.3, fontSize: 18 }}
-          
+          leftStyle={{ paddingTop: 3, flex: 0.3 }}
+          style={styles.navbar}
           titleStyle={[
             styles.title,
             { color: theme.COLORS[white ? "WHITE" : "ICON"] },
@@ -630,7 +621,9 @@ export default class Tasks extends React.Component {
               </TouchableOpacity>
             </Block>
           }
-          
+          rightStyle={{ alignItems: "center" }}
+          leftStyle={{ fontSize: 18 }}
+          style={styles.navbar}
         />
         {this.state.isSearchShow ? this.renderHeader() : null}
       </Block>
@@ -726,19 +719,7 @@ export default class Tasks extends React.Component {
   setTaskModel = async (item, index, isexpend) => {
     try {
       let commonData = CommonDataManager.getInstance();
-      //alert(JSON.stringify(item));
-      let RowID =
-        item.ActionRowIDKeyTypeID == 10 && this.props.route.params.ismsg == true
-          ? item.ActionRowID
-          : item.RowID;
-      let taskDetail = await database.getTaskDetailAsync(RowID);
-
-      let taskDetailcount = await database.getTaskDetailCountAsync(
-        this.props.route.params.pageData.ClientAppID
-      );
-
-      let clientAppData = await commonData.getClientAppData();
-
+      console.log("Item data", JSON.stringify(item));
       this.setState({ ActionRowID: item.ActionRowID });
       this.setState({ SelectedRowId: RowID });
       this.setState({ ActionRowIDKeyTypeID: item.ActionRowIDKeyTypeID });
@@ -757,11 +738,20 @@ export default class Tasks extends React.Component {
         this.setState({ isMessageDetailShow: false });
       }
 
+      let RowID =
+        item.ActionRowIDKeyTypeID == 10 && this.props.route.params.ismsg == true
+          ? item.ActionRowID
+          : item.RowID;
+
+      let taskDetail = await database.getTaskDetailAsync(RowID);
+
+      //
+      let clientAppData = await commonData.getClientAppData();
       clientAppData = clientAppData.filter(
         (e) => e.ClientAppID == this.props.route.params.pageData.ClientAppID
       );
-      let filterApp;
 
+      let filterApp;
       if (
         clientAppData.length > 0 &&
         clientAppData[0].ConfigFields != "" &&
@@ -769,7 +759,6 @@ export default class Tasks extends React.Component {
       ) {
         filterApp = JSON.parse(clientAppData[0].ConfigFields);
       }
-
       //alert(JSON.stringify(filterApp));
       filterApp = filterApp
         ? filterApp.Fields.filter(
@@ -780,7 +769,8 @@ export default class Tasks extends React.Component {
       if (taskDetail && taskDetail.taskDetailData != null) {
         let finalData = JSON.parse(taskDetail.taskDetailData);
 
-        if (!this.props.route.params.ismsg) {
+        // console.log("final data", finalData);
+        /*if (!this.props.route.params.ismsg) {
           var createddate = new Date(finalData.CreatedDate);
           var formattedDate = format(createddate, "MMMM do, yyyy H:mm a");
           finalData.formattedCreatedDate = formattedDate;
@@ -791,18 +781,21 @@ export default class Tasks extends React.Component {
             finalData.formattedStartDate = formattedDate;
             this.setState({ taskDetail: finalData });
           }
-        }
+        }*/
+
+        //why we need this data parse here?
         let taskKeyValue = [];
         //alert(JSON.stringify(finalData));
         item.Description = this.props.route.params.ismsg
           ? finalData.MsgText
           : finalData.Description;
         //item.MsgSubject = this.props.route.params.ismsg ? finalData.MsgSubject : "";
-
+        console.log("final data", finalData);
         this.setState({ taskDetail: finalData });
 
         //item.Description = finalData.Description;
-        item.TaskStatusID = finalData.TaskStatusID;
+        //what is the use of taskId ?
+        // item.TaskStatusID = finalData.TaskStatusID;
         item.TaskStatus = finalData.TaskStatus;
         if (filterApp) {
           let fields = filterApp.map((e) => e.DefaultValue);
@@ -851,6 +844,7 @@ export default class Tasks extends React.Component {
         // else
         this.setState({ TaskDetailKeyValue: taskKeyValue });
         //alert(JSON.stringify(finalData.Actions));
+        //it required for show action
         if (finalData.Actions)
           this.setState({ actions: JSON.parse(finalData.Actions).Actions });
         else this.setState({ actions: "" });
@@ -863,11 +857,8 @@ export default class Tasks extends React.Component {
         });
 
         let targetPost = this.state.taskData[index];
-
         targetPost.isExpand = isexpend;
-
         this.state.taskData[index] = targetPost;
-
         var updatedTask = this.state.taskData;
         //Loader.isLoading = false;
         //this.setState({loading:false});
@@ -877,6 +868,7 @@ export default class Tasks extends React.Component {
         //alert(JSON.stringify(this.state.TaskDetailKeyValue));
         //this.setState({loading:false});
 
+        //what is the use of this piece of code here?
         if (
           (!item.ReadStatusID || item.ReadStatusID == 0) &&
           this.state.SupportReadStatus
@@ -890,7 +882,6 @@ export default class Tasks extends React.Component {
         }
       } else {
         //no data found need to pull data from server
-
         let objData = DynamicTaskData.getInstance();
         var taskIds = [];
         taskIds.push(item.RowID);
@@ -958,12 +949,12 @@ export default class Tasks extends React.Component {
       this.setState({ loading: false });
     }
     //this.setState({loading:false});
-    console.log("Loader", Loader.isLoading);
+    // console.log("Loader", Loader.isLoading);
     //Loader.isLoading = false;
   };
   loaderoff() {
     //alert('ysss');
-    Loader.isLoading = false;
+    // Loader.isLoading = false;
   }
 
   setTaskData(finalData, item, filterApp, index, isexpend, ismsg) {
@@ -1015,6 +1006,16 @@ export default class Tasks extends React.Component {
         }
       }
     }
+    this.setState({
+      taskData: this.state.taskData.map((item) => {
+        item.isExpand = false;
+        return item;
+      }),
+    });
+
+    let targetPost = this.state.taskData[index];
+    targetPost.isExpand = isexpend;
+    this.state.taskData[index] = targetPost;
 
     //  if(ismsg == true)
     //  this.setState({MsgDetailKeyValue : taskKeyValue});
@@ -1024,19 +1025,6 @@ export default class Tasks extends React.Component {
     if (finalData.Actions)
       this.setState({ actions: JSON.parse(finalData.Actions).Actions });
     else this.setState({ actions: "" });
-
-    this.setState({
-      taskData: this.state.taskData.map((item) => {
-        item.isExpand = false;
-        return item;
-      }),
-    });
-
-    let targetPost = this.state.taskData[index];
-
-    targetPost.isExpand = isexpend;
-
-    this.state.taskData[index] = targetPost;
 
     var updatedTask = this.state.taskData;
     //Loader.isLoading = false;

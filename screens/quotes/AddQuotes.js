@@ -9,6 +9,7 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  Appearance,
 } from "react-native";
 import { Button, Block, NavBar, Text, Input, theme } from "galio-framework";
 const { height, width } = Dimensions.get("window");
@@ -19,13 +20,13 @@ import { Icon } from "../../components/";
 
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import materialTheme from "../../constants/Theme";
-import { Appearance } from 'react-native';
 import moment from "moment";
 import {
   deleteQuoteItem,
   getJobQuotes,
   saveTaskQuoteAsync,
 } from "../../Data/GetQuoteAsync";
+import { parse } from "date-fns";
 
 export default class AddQuotes extends React.Component {
   constructor(props) {
@@ -113,8 +114,20 @@ export default class AddQuotes extends React.Component {
       return parseFloat(p) + parseFloat(n.AmountTotal);
     }, 0);
 
+    const totalPrice = taskQuoteList.reduce(
+      (total, element) => (total += element.Amount),
+      0
+    );
+    const totalPriceTax = taskQuoteList.reduce(
+      (total, element) => (total += element.AmountTax),
+      0
+    );
+    console.log("Total", totalPrice);
+    this.setState({ totalShowingAmount: totalPrice });
+    this.setState({ totalShowingTaxAmount: totalPriceTax });
     this.setState({ totalSummaryAmount: total });
   }
+
   handleLeftPress = () => {
     const { navigation } = this.props;
     navigation.goBack();
@@ -217,7 +230,7 @@ export default class AddQuotes extends React.Component {
       <TouchableOpacity
         onPress={() => {
           if (isJobReadOnly === false) {
-            console.log("quote data" + JSON.stringify(item));
+            // console.log("quote data" + JSON.stringify(item));
             this.gotoAddQuotesValue(item);
           }
         }}
@@ -243,7 +256,7 @@ export default class AddQuotes extends React.Component {
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
-              marginTop: 7,
+              marginTop: 10,
             }}
           >
             <View>
@@ -362,6 +375,8 @@ export default class AddQuotes extends React.Component {
       notes,
       taskQuoteList,
       totalSummaryAmount,
+      totalShowingAmount,
+      totalShowingTaxAmount,
       loading,
       loadingDelete,
       isJobReadOnly,
@@ -610,23 +625,65 @@ export default class AddQuotes extends React.Component {
                       <View
                         style={{
                           flexDirection: "row",
-                          alignSelf: "flex-end",
                           marginBottom: 10,
+                          width: "100%",
                         }}
                       >
-                        <Text style={styles.listTextValue}>{"Summary:"}</Text>
                         <Text
                           style={[
-                            styles.listTextValue,
+                            styles.listTextValueSummary,
                             {
-                              marginStart: 10,
-                              fontWeight: "bold",
-                              marginEnd: 5,
+                              width: "25%",
+                              alignSelf: "flex-end",
+                              flex: 1,
+                              flexDirection: "row",
+                              justifyContent: "flex-end",
                             },
                           ]}
                         >
-                          {totalSummaryAmount.toFixed(2)}
+                          {"Summary"}
                         </Text>
+                        <View style={{ flexDirection: "column", width: "25%" }}>
+                          <Text style={{ color: "gray", fontSize: 12 }}>
+                            Amount
+                          </Text>
+                          <Text>{totalShowingAmount.toFixed(2)}</Text>
+                        </View>
+                        <View style={{ flexDirection: "column", width: "25%" }}>
+                          <Text style={{ color: "gray", fontSize: 12 }}>
+                            Amount Tax
+                          </Text>
+                          <Text>{totalShowingTaxAmount.toFixed(2)}</Text>
+                        </View>
+                        <View style={{ flexDirection: "column", width: "25%" }}>
+                          <Text
+                            style={{
+                              color: "gray",
+                              fontSize: 12,
+                              marginStart: 30,
+                            }}
+                          >
+                            Amt Total
+                          </Text>
+                          <Text
+                            style={[
+                              styles.listTextValue,
+
+                              {
+                                marginStart: 30,
+                                fontWeight: "bold",
+                                marginEnd: 5,
+                                alignSelf: "flex-end",
+                                flex: 1,
+                                fontSize: 11,
+                                flexDirection: "row",
+                                justifyContent: "flex-end",
+                              },
+                            ]}
+                          >
+                            {totalSummaryAmount.toFixed(2)}
+                          </Text>
+                        </View>
                       </View>
                     ) : (
                       <Text style={{ color: "#acacac", alignSelf: "center" }}>
@@ -743,11 +800,15 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
   },
   textSubHeading: {
-    fontSize: 10,
+    fontSize: 12,
     color: "gray",
   },
   listTextValue: {
-    fontSize: 15,
+    fontSize: 14,
+    color: "black",
+  },
+  listTextValueSummary: {
+    fontSize: 14,
     color: "black",
   },
 });

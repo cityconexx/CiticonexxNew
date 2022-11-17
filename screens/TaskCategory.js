@@ -3,14 +3,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
- 
+  ScrollView,
   Platform,
   View,
   FlatList,
   Image,
-  
+  Appearance,
+  LogBox,
 } from "react-native";
-import {  Block, NavBar, Text, Input, theme } from "galio-framework";
+import R from "ramda";
+import { Block, NavBar, Text, Input, theme } from "galio-framework";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 const { height, width } = Dimensions.get("window");
 const iPhoneX = () =>
@@ -18,13 +20,15 @@ const iPhoneX = () =>
   (height === 812 || width === 812 || height === 896 || width === 896);
 import NetInfo from "@react-native-community/netinfo";
 import { Icon } from "../components/";
-import { Appearance } from 'react-native';
 import materialTheme from "../constants/Theme";
 import { database } from "../OfflineData/TaskSyncData";
 import DynamicTaskData, { requetActivityModel } from "../Data/DynamicTaskData";
 import Spinner from "react-native-loading-spinner-overlay";
-
 import Theme from "../constants/Theme";
+
+LogBox.ignoreAllLogs(true);
+let finalResult = [];
+
 export default class TaskCategory extends React.Component {
   constructor(props) {
     super(props);
@@ -57,8 +61,8 @@ export default class TaskCategory extends React.Component {
   async componentDidMount() {
     let isConnected = false;
     NetInfo.addEventListener((networkState) => {
-      console.log("Connection type - ", networkState.type);
-      console.log("Is connected? - ", networkState.isConnected);
+      // console.log("Connection type - ", networkState.type);
+      // console.log("Is connected? - ", networkState.isConnected);
       isConnected = networkState.isConnected;
     });
     //await database.dropTable()
@@ -75,10 +79,12 @@ export default class TaskCategory extends React.Component {
 
         this.setState({ data: data.activityData });
         this.setState({ fulldata: data.activityData });
+        console.log("without search data", data.length);
       });
     } else {
       this.setState({ data: data.activityData });
       this.setState({ fulldata: data.activityData });
+      console.log("without search outside data", this.state.data.length);
     }
   }
   loadActivityDataFromServer = async (onloadsucess) => {
@@ -146,25 +152,87 @@ export default class TaskCategory extends React.Component {
       selectedChildPosition: -1,
       selectedSubChildPosition: -1,
     });
+    await this.searchResult(text);
+  };
 
+  searchResult = async (text) => {
     if (text) {
       this.setState({ isInputForSearch: true });
-      let masterDataSource = this.state.fulldata;
+      const masterDataSource = this.state.fulldata;
 
-      let resultParent = masterDataSource.filter(
-        (item) =>
-          item.cat_json
-            .toString()
-            .toLowerCase()
-            .indexOf(text.toString().toLowerCase()) > -1
-      );
-      this.setState({ data: resultParent });
+      //make parent data
+      let index1;
+      let index2;
+      let index3;
+      //parent data start
+      let tempArray = [];
+      finalResult = [];
+      //set final resul empty incase user click on cross
+      if (text === "") this.setState({ data: finalResult });
+      //top level loop start
+      for (index1 = 0; index1 < masterDataSource.length; index1++) {
+        let parentObject = R.clone(masterDataSource[index1]);
+        if (
+          parentObject.category_text.toLowerCase().includes(text.toLowerCase())
+        ) {
+          parentObject.items = JSON.parse(parentObject.items);
+          tempArray.push(parentObject);
+        } else {
+          //second level start
+          let tempLevel2DataParsed = JSON.parse(masterDataSource[index1].items);
+          let tempArray2 = [];
+          //second level loop start
+          for (
+            index2 = 0;
+            index2 < tempLevel2DataParsed.items.length;
+            index2++
+          ) {
+            let level2Object = R.clone(
+              JSON.parse(JSON.stringify(tempLevel2DataParsed.items[index2]))
+            );
+            if (level2Object.text.toLowerCase().includes(text.toLowerCase())) {
+              tempArray2.push(level2Object);
+            } else {
+              //third level start
+              let tempLevel3Data = JSON.parse(masterDataSource[index1].items)
+                .items[index2].items;
+              let tempArray3 = [];
+              //third level loop start
+              for (index3 = 0; index3 < tempLevel3Data.length; index3++) {
+                let level3Object = R.clone(tempLevel3Data[index3]);
+                if (
+                  level3Object.text.toLowerCase().includes(text.toLowerCase())
+                ) {
+                  tempArray3.push(level3Object);
+                }
+              }
+              if (tempArray3.length > 0) {
+                level2Object.items = [...tempArray3];
+                tempArray2.push(level2Object);
+              }
+              tempArray3 = [];
+            }
+          }
+          //bind two level data
+          if (tempArray2.length > 0) {
+            parentObject.items = [...tempArray2];
+            tempArray.push(parentObject);
+          }
+          tempArray2 = [];
+        }
+        //final data bind here
+        if (tempArray.length > 0) {
+          finalResult.push(...tempArray);
+        }
+        tempArray = [];
+      }
+
+      this.setState({ data: finalResult });
     } else {
       this.setState({ isInputForSearch: !this.state.isInputForSearch });
       this.setState({ data: this.state.fulldata });
     }
   };
-
   renderHeader = () => {
     return <Block center>{this.renderSearch()}</Block>;
   };
@@ -306,7 +374,8 @@ export default class TaskCategory extends React.Component {
 
                   // />
                   this.renderLists()
-                : null}
+                : // null
+                  null}
             </Block>
           </View>
         ) : (
@@ -346,37 +415,20 @@ export default class TaskCategory extends React.Component {
     return (
       <FlatList
         data={this.state.data}
+        initialNumToRender={30}
         keyExtractor={({ item, index }) => item + "-" + index}
         renderItem={({ item, index }) => {
           let itemParent = item;
-          let tempLevel1Data = JSON.parse(item.cat_json).items;
-
-          let innerLvl1Array = "";
-          let resultLevel1 = [];
-
-          // if (this.state.data.length > 0) {
-          //   innerLvl1Array = tempLevel1Data;
-          //   // resultLevel1 = tempLevel1Data;
-          // } else {
-          resultLevel1 = tempLevel1Data.filter(
-            (item) =>
-              item.text
-                .toString()
-                .toLowerCase()
-                .indexOf(this.state.text.toString().toLowerCase()) > -1
-          );
-
-          // console.log("filter data level1", resultLevel1.length);
-          // console.log("item data", tempLevel1Data);
+          let secondNodeData = [];
 
           if (this.state.isInputForSearch) {
-            if (resultLevel1.length > 0) {
-              innerLvl1Array = resultLevel1;
+            if (typeof item.items.items === "object") {
+              secondNodeData = item.items.items;
             } else {
-              innerLvl1Array = tempLevel1Data;
+              secondNodeData = item.items;
             }
           } else {
-            innerLvl1Array = tempLevel1Data;
+            secondNodeData = JSON.parse(item.items).items;
           }
 
           return (
@@ -393,32 +445,13 @@ export default class TaskCategory extends React.Component {
               {this.renderNodeParent(
                 item.category_text,
                 0,
-                this.state.isInputForSearch,
-                resultLevel1
+                this.state.isInputForSearch
               )}
               {this.state.selectedParentPosition === index ? (
                 <FlatList
-                  data={innerLvl1Array}
+                  data={secondNodeData}
                   keyExtractor={({ item, index }) => item + "=" + index}
                   renderItem={({ item, index }) => {
-                    let tempLevel2Data = item.items;
-                    let innerLvl2Array = "";
-
-                    let result = tempLevel2Data.filter(
-                      (item) =>
-                        item.text
-                          .toString()
-                          .toLowerCase()
-                          .indexOf(this.state.text.toString().toLowerCase()) >
-                        -1
-                    );
-                    // console.log("filter data level2", result);
-                    // console.log("filter condition status", result.length);
-                    innerLvl2Array =
-                      this.state.isInputForSearch && result.length > 0
-                        ? result
-                        : tempLevel2Data;
-
                     let itemChild = item;
                     return (
                       <TouchableOpacity
@@ -432,15 +465,10 @@ export default class TaskCategory extends React.Component {
                           });
                         }}
                       >
-                        {this.renderNodeLevel1(
-                          item.text,
-                          1,
-                          result,
-                          resultLevel1
-                        )}
+                        {this.renderNodeLevel1(item.text, 1)}
                         {this.state.selectedChildPosition === index ? (
                           <FlatList
-                            data={innerLvl2Array}
+                            data={item.items}
                             keyExtractor={({ item, index }) =>
                               item + "x" + index
                             }
@@ -473,7 +501,7 @@ export default class TaskCategory extends React.Component {
     );
   };
 
-  renderNodeParent = (text, level, isSearchShow, result) => {
+  renderNodeParent = (text, level, isSearchShow) => {
     const paddingLeft = (level + 1) * 30;
     const backgroundColor = isSearchShow ? Theme.COLORS.LIGTGREY : "white";
 
@@ -483,26 +511,19 @@ export default class TaskCategory extends React.Component {
       </View>
     );
   };
-  renderNodeLevel1 = (text, level, result, resultLevel1) => {
+  renderNodeLevel1 = (text, level) => {
     const paddingLeft = (level + 1) * 30;
     const backgroundColor = colorLevels[level] || "white";
-    // console.log("level2", result.length);
-    // console.log("level1", resultLevel1.length);
-    // console.log("levelParent", this.state.data.length);
 
-    return this.state.data.length > 0 ||
-      resultLevel1.length > 0 ||
-      result.length > 0 ? (
+    return (
       <View style={[styles.node, { backgroundColor, paddingLeft }]}>
         <Text style={styles.textcolor}>{text}</Text>
       </View>
-    ) : null;
+    );
   };
   renderNodeLevel2 = (text, level) => {
     const paddingLeft = (level + 1) * 30;
-
     const backgroundColor = colorLevels[level] || "white";
-
     return (
       <View style={[styles.node, { backgroundColor, paddingLeft }]}>
         <Text style={styles.textcolor}>{text}</Text>

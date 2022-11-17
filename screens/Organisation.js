@@ -3,12 +3,12 @@ import {
   StyleSheet,
   Dimensions,
   KeyboardAvoidingView,
-
   Platform,
   View,
   FlatList,
   SafeAreaView,
   Image,
+  Appearance,
 } from "react-native";
 import { Block, Input, Text, theme } from "galio-framework";
 
@@ -19,7 +19,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommonDataManager from "../core/CommonDataManager";
 import baseAPI, { setClientToken } from "../core/baseAPI";
 
-import { Appearance } from 'react-native';
 import { udatabase } from "../OfflineData/UserAyncDetail";
 
 const { width } = Dimensions.get("window");

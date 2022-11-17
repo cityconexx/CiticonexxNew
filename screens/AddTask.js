@@ -6,9 +6,10 @@ import {
   Dimensions,
   ScrollView,
   View,
-
   Image,
   Keyboard,
+  Appearance,
+  SafeAreaView,
   TouchableWithoutFeedback,
 } from "react-native";
 import { Button, Block, NavBar, Text, Input, theme } from "galio-framework";
@@ -17,11 +18,10 @@ const { height, width } = Dimensions.get("window");
 const iPhoneX = () =>
   Platform.OS === "ios" &&
   (height === 812 || width === 812 || height === 896 || width === 896);
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+
 import { Icon } from "../components/";
 
 import materialTheme from "../constants/Theme";
-import { Appearance } from 'react-native';
 
 import RNPickerSelect from "react-native-picker-select";
 
@@ -30,7 +30,6 @@ import moment from "moment";
 import NetInfo from "@react-native-community/netinfo";
 import DynamicTaskData, {
   requestTaskDLLModel,
-  
   requestTaskSaveModel,
 } from "../Data/DynamicTaskData";
 import CommonDataManager from "../core/CommonDataManager";
@@ -40,17 +39,19 @@ import { FontAwesome } from "@expo/vector-icons";
 import { database } from "../OfflineData/TaskSyncData";
 
 import Spinner from "react-native-loading-spinner-overlay";
-// import CNRichTextEditor, {
-//   CNToolbar,
-//   getInitialObject,
-//   getDefaultStyles,
-//   convertToObject,
-//   convertToHtmlString,
-// } from "react-native-cn-richtext-editor";
-import { MaterialIcons } from '@expo/vector-icons';
-import { RichTextEditor, RichTextViewer } from '@siposdani87/expo-rich-text-editor';
+import { MaterialIcons } from "@expo/vector-icons";
+// import {
+//   RichTextEditor,
+//   RichTextViewer,
+//   ActionMap,
+//   ActionKey,
+// } from "@siposdani87/expo-rich-text-editor";
 import * as Location from "expo-location";
-
+import {
+  actions,
+  RichEditor,
+  RichToolbar,
+} from "react-native-pell-rich-editor";
 
 /////import {Ionicons} from '@expo/vector-icons';
 
@@ -58,7 +59,6 @@ export default class AddTask extends React.Component {
   constructor(props) {
     super(props);
     this.customStyles = {
-      //...defaultStyles,
       body: { fontSize: 11 },
       heading: { fontSize: 16 },
       title: { fontSize: 20 },
@@ -73,7 +73,7 @@ export default class AddTask extends React.Component {
       Description: "",
       selectedCategory: "",
       TaskName: "",
-      value: convertToObject("<div><p> </p></div>", this.customStyles),
+      value: "",
       ActivityTypeID: 0,
       ActivityTypeTaskID: 0,
       TaskID: 0,
@@ -112,54 +112,31 @@ export default class AddTask extends React.Component {
       EnableNewRecord: false,
       lat: 35.681236,
       long: 139.767125,
+      richText: "",
     };
-    //alert(JSON.stringify(this.props.route.params));
-    this.editor = null;
+
+    this.editor = React.createRef();
   }
-  onStyleKeyPress = (toolType) => {
-    if (toolType == "image") {
-      return;
-    } else {
-      this.editor.applyToolbar(toolType);
-    }
-  };
-
-  onSelectedTagChanged = (tag) => {
-    this.setState({
-      selectedTag: tag,
-    });
-  };
-
-  onSelectedStyleChanged = (styles) => {
-    const colors = this.state.colors;
-    const highlights = this.state.highlights;
-    let sel = styles.filter((x) => colors.indexOf(x) >= 0);
-
-    let hl = styles.filter((x) => highlights.indexOf(x) >= 0);
-    this.setState({
-      selectedStyles: styles,
-      selectedColor: sel.length > 0 ? sel[sel.length - 1] : "default",
-      selectedHighlight: hl.length > 0 ? hl[hl.length - 1] : "default",
-    });
-  };
-
   onValueChanged = (value) => {
     this.setState({
       value: value,
     });
   };
-
- getActionMap = () => {
+  getColor = (selected) => {
+    return selected ? "red" : "black";
+  };
+  getActionMap = () => {
     return {
-        bold: ({ selected }) => (
-            <MaterialIcons
-                name="format-bold"
-                size={14}
-                color={getColor(selected)}
-            />
-        ),
+      [ActionKey.bold]: ({ selected }) => (
+        <MaterialIcons
+          name="format-bold"
+          size={14}
+          color={this.getColor(selected)}
+        />
+      ),
     };
-};
+  };
+
   async componentDidMount() {
     const foregroundPermission =
       await Location.requestForegroundPermissionsAsync();
@@ -293,7 +270,7 @@ export default class AddTask extends React.Component {
       : "<div>" + this.props.route.params.taskData.Description + "</div>";
 
     this.setState({
-      value: convertToObject(desc, this.customStyles),
+      value: desc, //convertToObject(desc, this.customStyles),
     });
     //this.setState({Description:this.props.route.params.taskData.Description});
     this.setState({ LocationID: this.props.route.params.taskData.LocationID });
@@ -702,7 +679,7 @@ export default class AddTask extends React.Component {
       requestTaskSaveModel.UpdatedDate = moment(new Date()).format(
         "YYYY/MM/DD"
       );
-      let location = await Location.getCurrentPositionAsync({});
+      // let location = await Location.getCurrentPositionAsync({});
       requestTaskSaveModel.Lat = this.state.lat;
       requestTaskSaveModel.Long = this.state.long;
       console.log("request for edit: ", JSON.stringify(requestTaskSaveModel));
@@ -862,17 +839,59 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                             onValueChanged={this.onValueChanged}
                           /> */}
 
-<RichTextEditor
-                minHeight={150}
-                value={value}
-                selectionColor="green"
-                actionMap={getActionMap()}
-                onValueChange={onValueChanged}
-                toolbarStyle={styles.toolbar}
-                editorStyle={styles.editor}
-            />
+                          {/* <RichTextEditor
+                            minHeight={150}
+                            value={this.state.value}
+                            selectionColor="green"
+                            actionMap={this.getActionMap()}
+                            onValueChange={this.onValueChanged}
+                            toolbarStyle={styles.toolbar}
+                            editorStyle={styles.editor}
+                          />
+                          
 
-            <RichTextViewer value={this.state.value} editorStyle={styles.viewer} linkStyle={styles.link} />
+                          <RichTextViewer
+                            value={this.state.value}
+                            editorStyle={styles.viewer}
+                            linkStyle={styles.link}
+                          /> */}
+                          <SafeAreaView>
+                            <ScrollView>
+                              <KeyboardAvoidingView
+                                behavior={
+                                  Platform.OS === "ios" ? "padding" : "height"
+                                }
+                                style={{ flex: 1 }}
+                              >
+                                <RichToolbar
+                                  editor={this.editor}
+                                  actions={[
+                                    actions.setBold,
+                                    actions.setItalic,
+                                    actions.setUnderline,
+                                    actions.heading1,
+                                  ]}
+                                  iconMap={{
+                                    [actions.heading1]: ({ tintColor }) => (
+                                      <Text style={[{ color: tintColor }]}>
+                                        H1
+                                      </Text>
+                                    ),
+                                  }}
+                                />
+                                <RichEditor
+                                  ref={this.editor}
+                                  height={250}
+                                  scrollEnabled={true}
+                                  onChange={(descriptionText) => {
+                                    this.setState({
+                                      richText: descriptionText,
+                                    });
+                                  }}
+                                />
+                              </KeyboardAvoidingView>
+                            </ScrollView>
+                          </SafeAreaView>
                         </View>
                       </TouchableWithoutFeedback>
 
@@ -882,7 +901,7 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         }}
                       >
                         <View style={styles.toolbarContainer}>
-                          <CNToolbar
+                          {/* <RichTextToolbar
                             style={{
                               height: 45,
                             }}
@@ -975,12 +994,12 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                             ]}
                             selectedTag={this.state.selectedTag}
                             selectedStyles={this.state.selectedStyles}
-                            onStyleKeyPress={this.onStyleKeyPress}
+                            // onStyleKeyPress={this.onStyleKeyPress}
                             backgroundColor="aliceblue" // optional (will override default backgroundColor)
                             color="gray" // optional (will override default color)
                             selectedColor="white" // optional (will override default selectedColor)
                             selectedBackgroundColor="deepskyblue" // optional (will override default selectedBackgroundColor)
-                          />
+                          /> */}
                         </View>
                       </View>
                     </KeyboardAvoidingView>
@@ -1040,13 +1059,14 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                             TaskStatusID: value,
                           });
                         }}
+                        style={pickerSelectStyles}
                         // onUpArrow={() => {
                         //   this.inputRefs.firstTextInput.focus();
                         // }}
                         // onDownArrow={() => {
                         //   this.inputRefs.favSport1.togglePicker();
                         // }}
-                        style={pickerSelectStyles}
+
                         value={this.state.TaskStatusID}
                         // ref={el => {
                         //   this.inputRefs.favSport0 = el;
@@ -1066,13 +1086,14 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                           Priority: value,
                         });
                       }}
+                      style={pickerSelectStyles}
                       // onUpArrow={() => {
                       //   this.inputRefs.firstTextInput.focus();
                       // }}
                       // onDownArrow={() => {
                       //   this.inputRefs.favSport1.togglePicker();
                       // }}
-                      style={pickerSelectStyles}
+
                       value={this.state.Priority}
                       // ref={el => {
                       //   this.inputRefs.favSport0 = el;
@@ -1092,13 +1113,14 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                           LocationID: value,
                         });
                       }}
+                      style={pickerSelectStyles}
                       // onUpArrow={() => {
                       //   this.inputRefs.firstTextInput.focus();
                       // }}
                       // onDownArrow={() => {
                       //   this.inputRefs.favSport1.togglePicker();
                       // }}
-                      style={pickerSelectStyles}
+
                       value={this.state.LocationID}
                       // ref={el => {
                       //   this.inputRefs.favSport0 = el;
@@ -1117,8 +1139,8 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                           AssignedToUserID: value,
                         });
                       }}
-                      style={pickerSelectStyles}
                       value={this.state.AssignedToUserID}
+                      style={pickerSelectStyles}
                     />
 
                     <TouchableOpacity
@@ -1240,8 +1262,10 @@ const pickerSelectStyles = StyleSheet.create({
     paddingRight: 30, // to ensure the text is never behind the icon
   },
 });
-
 const styles = StyleSheet.create({
+  test: {
+    color: "red",
+  },
   container: {
     flex: 1,
   },
@@ -1451,23 +1475,23 @@ const styles = StyleSheet.create({
     letterSpacing: -0.29,
   },
   viewer: {
-    borderColor: 'green',
+    borderColor: "green",
     borderWidth: 1,
     padding: 5,
     // fontFamily: 'Oswald_400Regular',
-},
-editor: {
-    borderColor: 'blue',
+  },
+  editor: {
+    borderColor: "blue",
     borderWidth: 1,
     padding: 5,
     // fontFamily: 'Inter_500Medium',
     fontSize: 18,
-},
-toolbar: {
-    borderColor: 'red',
+  },
+  toolbar: {
+    borderColor: "red",
     borderWidth: 1,
-},
-link: {
-    color: 'green',
-},
+  },
+  link: {
+    color: "green",
+  },
 });

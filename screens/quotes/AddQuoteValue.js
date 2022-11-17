@@ -6,8 +6,10 @@ import {
   ScrollView,
   View,
   Image,
-
+  FlatList,
   ActivityIndicator,
+  Appearance,
+  TextInput,
 } from "react-native";
 import { Button, Block, NavBar, Text, Input, theme } from "galio-framework";
 const { height, width } = Dimensions.get("window");
@@ -17,11 +19,9 @@ const iPhoneX = () =>
 import { Icon } from "../../components/";
 
 import materialTheme from "../../constants/Theme";
-import { Appearance } from 'react-native';
 import Toast from "react-native-toast-message";
 import RNPickerSelect from "react-native-picker-select";
 import { saveTaskQuoteItemAsync } from "../../Data/GetQuoteAsync";
-
 export default class AddQuoteValue extends React.Component {
   constructor(props) {
     super(props);
@@ -336,18 +336,33 @@ export default class AddQuoteValue extends React.Component {
             <Block flex style={styles.notification}>
               <Block flex={1} center space="between">
                 <Block>
-                  <RNPickerSelect
-                    style={pickerSelectStyles}
-                    placeholder={{
-                      label: "Rate Type",
-                      value: null,
-                      color: "#9e9d98",
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "column",
+                      marginTop: 10,
                     }}
-                    value={selectRateListId}
-                    placeholderTextColor="red"
-                    items={rateList}
-                    onValueChange={this.onRateTypeSelect}
-                  />
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Rate Type
+                    </Text>
+                    <RNPickerSelect
+                      style={pickerSelectStyles}
+                      placeholder={{
+                        label: "Rate Type",
+                        value: null,
+                        color: "#9e9d98",
+                      }}
+                      value={selectRateListId}
+                      placeholderTextColor="red"
+                      items={rateList}
+                      onValueChange={this.onRateTypeSelect}
+                    />
+                  </View>
                   <View
                     style={{
                       marginTop: 10,
@@ -371,6 +386,8 @@ export default class AddQuoteValue extends React.Component {
                     autoCapitalize="none"
                     style={[styles.inputDescription]}
                     value={description}
+                    multiline={true}
+                    numberOfLines={5}
                     onChangeText={(text) => {
                       this.onChangeDescription(text);
                     }}
@@ -425,35 +442,58 @@ export default class AddQuoteValue extends React.Component {
                   <View
                     style={{
                       flexDirection: "row",
-                      width: "85%",
+                      width: "95%",
                       alignSelf: "center",
                     }}
                   >
-                    <RNPickerSelect
-                      style={pickerSelectStyles}
-                      placeholder={{
-                        label: "Tax Type",
-                        value: null,
-                        color: "#9e9d98",
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: "column",
+                        width: "50%",
+                        marginTop: 10,
+                        marginStart: 10,
                       }}
-                      placeholderTextColor="red"
-                      items={taxTypeList}
-                      value={selectTaxTypeId}
-                      onValueChange={() => {}}
-                    />
+                    >
+                      <Text style={{ fontWeight: "bold" }}>Tax type</Text>
+                      <RNPickerSelect
+                        style={pickerSelectStylesTax}
+                        placeholder={{
+                          label: "Tax Type",
+                          value: null,
+                          color: "#9e9d98",
+                        }}
+                        placeholderTextColor="red"
+                        items={taxTypeList}
+                        value={selectTaxTypeId}
+                        onValueChange={() => {}}
+                      />
+                    </View>
 
-                    <Input
-                      bgColor="transparent"
-                      placeholderTextColor={materialTheme.COLORS.PLACEHOLDER}
-                      borderless
-                      color={scheme === "dark" ? "white" : "black"}
-                      placeholder="Amount"
-                      value={amount}
-                      autoCapitalize="none"
-                      style={styles.inputTextHorizontalStyle}
-                      //pointerEvents="none"
-                      editable={false}
-                    />
+                    <View style={{ marginStart: 10, width: "50%" }}>
+                      <Text
+                        style={{
+                          fontWeight: "bold",
+                          marginStart: 10,
+                          marginTop: 10,
+                        }}
+                      >
+                        Amount
+                      </Text>
+
+                      <Input
+                        bgColor="transparent"
+                        placeholderTextColor={materialTheme.COLORS.PLACEHOLDER}
+                        borderless
+                        color={scheme === "dark" ? "white" : "black"}
+                        placeholder="Amount"
+                        value={amount}
+                        autoCapitalize="none"
+                        style={styles.inputTextHorizontalStyleGST}
+                        //pointerEvents="none"
+                        editable={false}
+                      />
+                    </View>
                   </View>
 
                   <View
@@ -592,6 +632,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: materialTheme.COLORS.PLACEHOLDER,
   },
+  inputTextHorizontalStyleGST: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: materialTheme.COLORS.PLACEHOLDER,
+  },
 });
 
 const pickerSelectStyles = StyleSheet.create({
@@ -605,6 +650,37 @@ const pickerSelectStyles = StyleSheet.create({
     //borderRadius: 4,
     color: scheme === "dark" ? "white" : "black",
     width: width * 0.9,
+    borderRadius: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: materialTheme.COLORS.PLACEHOLDER,
+
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: "purple",
+    borderRadius: 8,
+    color: scheme === "dark" ? "white" : "black",
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  viewContainer: {
+    flex: 1,
+  },
+});
+const pickerSelectStylesTax = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    textShadowColor: "#f0f",
+    //borderWidth: 1,
+    //borderColor: 'gray',
+    //borderRadius: 4,
+    color: scheme === "dark" ? "white" : "black",
+    width: width * 0.43,
     borderRadius: 0,
     borderBottomWidth: 1,
     borderBottomColor: materialTheme.COLORS.PLACEHOLDER,
