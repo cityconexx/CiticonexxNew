@@ -138,25 +138,23 @@ export default class AddTask extends React.Component {
   };
 
   async componentDidMount() {
-    const foregroundPermission =
-      await Location.requestForegroundPermissionsAsync();
-    let locationSubscrition = null;
-
-    if (foregroundPermission.granted) {
-      locationSubscrition = Location.watchPositionAsync(
-        {
-          // Tracking options
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 10,
-        },
-        (location) => {
-          this.setState({ lat: location.coords.latitude });
-          this.setState({ long: location.coords.longitude });
-          console.log(location.coords.latitude);
-          console.log(location.coords.longitude);
-        }
-      );
-    }
+    // const foregroundPermission = await Location.requestForegroundPermissionsAsync();
+    // let locationSubscrition = null;
+    // if (foregroundPermission.granted) {
+    //   locationSubscrition = Location.watchPositionAsync(
+    //     {
+    //       // Tracking options
+    //       accuracy: Location.Accuracy.High,
+    //       distanceInterval: 10,
+    //     },
+    //     (location) => {
+    //       this.setState({ lat: location.coords.latitude });
+    //       this.setState({ long: location.coords.longitude });
+    //       console.log(location.coords.latitude);
+    //       console.log(location.coords.longitude);
+    //     }
+    //   );
+    // }
 
     this._unsubscribe = this.props.navigation.addListener("focus", () => {
       AsyncStorage.getItem("selectedCategory").then((result) => {
@@ -177,8 +175,13 @@ export default class AddTask extends React.Component {
       });
     });
 
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    this.setState({ hasCameraPermission: status === "granted" });
+    // try {
+    //   const { status } = await Camera.requestCameraPermissionsAsync();
+    //   console.log("camera : success");
+    //   this.setState({ hasCameraPermission: status === "granted" });
+    // } catch (error) {
+    //   console.log("camera :error");
+    // }
     //this.getPermissionAsync();
     //alert(JSON.stringify(this.props.route.params.pageData));
 
@@ -230,6 +233,7 @@ export default class AddTask extends React.Component {
       //alert(JSON.stringify(data));
     }
   }
+
   loadEditData = async () => {
     let _selectedCategory =
       this.props.route.params.taskData.CategoryDesc +
@@ -258,13 +262,6 @@ export default class AddTask extends React.Component {
     this.setState({
       AssignedToUserID: this.props.route.params.taskData.AssignedToUserID,
     });
-    this.setState({ Priority: this.props.route.params.taskData.Priority });
-
-    this.setState({
-      StartDate: moment(this.props.route.params.taskData.StartDate).format(
-        "YYYY/MM/DD"
-      ),
-    });
     let desc = this.props.route.params.taskData.Description.startsWith("<div>")
       ? this.props.route.params.taskData.Description
       : "<div>" + this.props.route.params.taskData.Description + "</div>";
@@ -272,6 +269,15 @@ export default class AddTask extends React.Component {
     this.setState({
       value: desc, //convertToObject(desc, this.customStyles),
     });
+    alert(desc);
+    this.setState({ Priority: this.props.route.params.taskData.Priority });
+
+    this.setState({
+      StartDate: moment(this.props.route.params.taskData.StartDate).format(
+        "YYYY/MM/DD"
+      ),
+    });
+
     //this.setState({Description:this.props.route.params.taskData.Description});
     this.setState({ LocationID: this.props.route.params.taskData.LocationID });
   };
@@ -406,18 +412,6 @@ export default class AddTask extends React.Component {
     this.setState({ PriorityItems: priorityList });
     this.setState({ StatusItems: statusList });
   }
-  getPermissionAsync = async () => {
-    // Camera roll Permission
-    if (Platform.OS === "ios") {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        alert("Sorry, we need camera roll permissions to make this work!");
-      }
-    }
-    // Camera Permission
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    this.setState({ hasPermission: status === "granted" });
-  };
 
   handleChange = (name, value) => {
     this.setState({ [name]: value });
@@ -883,9 +877,10 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                                   ref={this.editor}
                                   height={250}
                                   scrollEnabled={true}
+                                  value={this.state.value}
                                   onChange={(descriptionText) => {
                                     this.setState({
-                                      richText: descriptionText,
+                                      value: descriptionText,
                                     });
                                   }}
                                 />
@@ -1060,17 +1055,7 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                           });
                         }}
                         style={pickerSelectStyles}
-                        // onUpArrow={() => {
-                        //   this.inputRefs.firstTextInput.focus();
-                        // }}
-                        // onDownArrow={() => {
-                        //   this.inputRefs.favSport1.togglePicker();
-                        // }}
-
                         value={this.state.TaskStatusID}
-                        // ref={el => {
-                        //   this.inputRefs.favSport0 = el;
-                        // }}
                       />
                     )}
                     <RNPickerSelect
@@ -1087,17 +1072,7 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         });
                       }}
                       style={pickerSelectStyles}
-                      // onUpArrow={() => {
-                      //   this.inputRefs.firstTextInput.focus();
-                      // }}
-                      // onDownArrow={() => {
-                      //   this.inputRefs.favSport1.togglePicker();
-                      // }}
-
                       value={this.state.Priority}
-                      // ref={el => {
-                      //   this.inputRefs.favSport0 = el;
-                      // }}
                     />
                     <RNPickerSelect
                       disabled={this.setState.disabledlocation}
@@ -1114,17 +1089,7 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         });
                       }}
                       style={pickerSelectStyles}
-                      // onUpArrow={() => {
-                      //   this.inputRefs.firstTextInput.focus();
-                      // }}
-                      // onDownArrow={() => {
-                      //   this.inputRefs.favSport1.togglePicker();
-                      // }}
-
                       value={this.state.LocationID}
-                      // ref={el => {
-                      //   this.inputRefs.favSport0 = el;
-                      // }}
                     />
                     <RNPickerSelect
                       placeholder={{
@@ -1139,8 +1104,8 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                           AssignedToUserID: value,
                         });
                       }}
-                      value={this.state.AssignedToUserID}
                       style={pickerSelectStyles}
+                      value={this.state.AssignedToUserID}
                     />
 
                     <TouchableOpacity
@@ -1259,6 +1224,7 @@ const pickerSelectStyles = StyleSheet.create({
     borderRadius: 8,
     color: scheme === "dark" ? "white" : "black",
     marginStart: 10,
+    useNativeAndroidPickerStyle: false,
     paddingRight: 30, // to ensure the text is never behind the icon
   },
 });
