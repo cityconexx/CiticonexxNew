@@ -315,7 +315,6 @@ export default class AddTask extends React.Component {
         console.log("lading from sql ligth1");
         //this.setState({loading:true});
         data = JSON.parse(data.taskDLL);
-        //alert(JSON.stringify(data));
         this.setDropdownData(data);
         if (
           this.props.route.params.pageData.ModuleID == 35 &&
