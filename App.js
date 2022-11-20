@@ -34,6 +34,8 @@ import { udatabase } from "./OfflineData/UserAyncDetail";
 import * as SplashScreen from "expo-splash-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { Camera } from "expo-camera";
+import * as Location from "expo-location";
 const BACKGROUND_FETCH_TASK = "background-fetch";
 const assetImages = [Images.Profile, Images.Avatar];
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
@@ -82,6 +84,39 @@ export default class App extends React.Component {
     //this.enablePushNotifications();
     //this.checkStatusAsync1();
     //await BackgroundService.start(veryIntensiveTask, options);
+    //for testing purpose
+    try {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      console.log("camera : success");
+      this.setState({ hasCameraPermission: status === "granted" });
+    } catch (error) {
+      console.log("camera :error");
+    }
+    try {
+      const foregroundPermission =
+        await Location.requestForegroundPermissionsAsync();
+      let locationSubscrition = null;
+      if (foregroundPermission.granted) {
+        locationSubscrition = Location.watchPositionAsync(
+          {
+            // Tracking options
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 10,
+          },
+          (location) => {
+            // this.setState({ lat: location.coords.latitude });
+            // this.setState({ long: location.coords.longitude });
+            // this.props.route.params.pageData.lat = location.coords.latitude;
+            // this.props.route.params.pageData.long = location.coords.longitude;
+            console.log(location.coords.latitude);
+            console.log(location.coords.longitude);
+          }
+        );
+      }
+    } catch (error) {
+      console.log("Location:", error);
+    }
+
     try {
       await SplashScreen.preventAutoHideAsync();
     } catch (e) {

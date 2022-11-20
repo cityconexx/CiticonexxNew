@@ -552,7 +552,7 @@ export default class DynamicTaskData {
   }
 
   async getTaskDLLData(ondllsuccess) {
-    //alert('funciton calling');
+    // console.log("funciton calling");
     let commonData = CommonDataManager.getInstance();
     let userData = await commonData.getUserDetail();
     let moduleData = await commonData.getModuleDetail();
@@ -565,7 +565,7 @@ export default class DynamicTaskData {
 
     const onSuccess = async ({ data }) => {
       this._TaskDLLData = await data.Result;
-      //alert(JSON.stringify(data.Result));
+      console.log("result", JSON.stringify(data.Result));
       database.setupTaskDLLAsync(requestTaskDLLModel.GroupAppId, data.Result);
 
       ondllsuccess(this._TaskDLLData);
@@ -574,7 +574,7 @@ export default class DynamicTaskData {
     };
 
     const onFailure = (error) => {
-      //alert('failed');
+      // alert("failed");
       udatabase.addlog("get task dropdown data from server called api failed");
       console.log(error && error.response);
       //this.setState({errors: error.response.data, isLoading: false});

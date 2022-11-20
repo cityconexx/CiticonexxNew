@@ -479,6 +479,7 @@ const setupTaskDLLAsync = async (groupAppId, json) => {
         resolve();
       },
       (t, success) => {
+        console.log("set up dll");
         resolve(success);
       }
     );

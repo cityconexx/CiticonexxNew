@@ -82,6 +82,9 @@ export default class Tasks extends React.Component {
 
   async componentDidMount() {
     //this.loadData();
+
+    console.log("run after permission");
+
     this.setState({ searchtext: "" });
     // udatabase.addlog("componentDidMount called");
     this.focusListener = this.props.navigation.addListener("focus", (e) => {
@@ -104,9 +107,15 @@ export default class Tasks extends React.Component {
       if (
         this.props.route.params.Type &&
         this.props.route.params.Type == "updated"
-      )
+      ) {
+        console.log("run after permission 5");
         this.loadData("updated");
-      else this.loadData("");
+        console.log("run after permission 2");
+      } else {
+        console.log("run after permission 3");
+        this.loadData("");
+        console.log("run after permission 4");
+      }
     });
   }
   clearfilter() {

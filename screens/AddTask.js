@@ -46,14 +46,12 @@ import { MaterialIcons } from "@expo/vector-icons";
 //   ActionMap,
 //   ActionKey,
 // } from "@siposdani87/expo-rich-text-editor";
-import * as Location from "expo-location";
 import {
   actions,
   RichEditor,
   RichToolbar,
+  setContentHTML,
 } from "react-native-pell-rich-editor";
-
-/////import {Ionicons} from '@expo/vector-icons';
 
 export default class AddTask extends React.Component {
   constructor(props) {
@@ -138,24 +136,6 @@ export default class AddTask extends React.Component {
   };
 
   async componentDidMount() {
-    // const foregroundPermission = await Location.requestForegroundPermissionsAsync();
-    // let locationSubscrition = null;
-    // if (foregroundPermission.granted) {
-    //   locationSubscrition = Location.watchPositionAsync(
-    //     {
-    //       // Tracking options
-    //       accuracy: Location.Accuracy.High,
-    //       distanceInterval: 10,
-    //     },
-    //     (location) => {
-    //       this.setState({ lat: location.coords.latitude });
-    //       this.setState({ long: location.coords.longitude });
-    //       console.log(location.coords.latitude);
-    //       console.log(location.coords.longitude);
-    //     }
-    //   );
-    // }
-
     this._unsubscribe = this.props.navigation.addListener("focus", () => {
       AsyncStorage.getItem("selectedCategory").then((result) => {
         //alert(result)
@@ -175,16 +155,6 @@ export default class AddTask extends React.Component {
       });
     });
 
-    // try {
-    //   const { status } = await Camera.requestCameraPermissionsAsync();
-    //   console.log("camera : success");
-    //   this.setState({ hasCameraPermission: status === "granted" });
-    // } catch (error) {
-    //   console.log("camera :error");
-    // }
-    //this.getPermissionAsync();
-    //alert(JSON.stringify(this.props.route.params.pageData));
-
     let isConnected = false;
     NetInfo.addEventListener((networkState) => {
       console.log("Connection type - ", networkState.type);
@@ -198,13 +168,17 @@ export default class AddTask extends React.Component {
     //alert(isTaskEditMode);
 
     if (isConnected) {
-      let objData = DynamicTaskData.getInstance();
+      // let objData = DynamicTaskData.getInstance();
 
       dlldata = await this.loadDLLDataFromServer();
-
+      // console.log("call this 1");
       let commonData = CommonDataManager.getInstance();
+      // console.log("call this 2");
       let groupData = await commonData.getGroupDetail();
+      // console.log("call this 3");
       let moduleDetail = await commonData.getModuleDetail();
+
+      // console.log("call this 4");
 
       moduleDetail = moduleDetail.filter(
         (e) =>
@@ -213,14 +187,18 @@ export default class AddTask extends React.Component {
       );
       groupData = groupData.filter((e) => e.GroupID == moduleDetail[0].GroupID);
 
-      if (isTaskEditMode) await this.loadEditData();
-      else
+      if (isTaskEditMode) {
+        console.log("call is edit");
+        await this.loadEditData();
+      } else {
+        console.log("call is edit false");
         this.setState({
           LocationID:
             groupData && groupData.length > 0
               ? groupData[0].GroupMemberLocationID
               : 1,
         });
+      }
 
       let userData = await commonData.getUserDetail();
       this.setState({ AssignedToUserID: userData.UserID });
@@ -269,7 +247,7 @@ export default class AddTask extends React.Component {
     this.setState({
       value: desc, //convertToObject(desc, this.customStyles),
     });
-    alert(desc);
+    // alert(desc);
     this.setState({ Priority: this.props.route.params.taskData.Priority });
 
     this.setState({
@@ -283,13 +261,13 @@ export default class AddTask extends React.Component {
   };
 
   loadDLLDataFromServer = async () => {
-    //alert(JSON.stringify(this.props.route.params));
+    // alert(JSON.stringify(this.props.route.params));//code fat jata yaha pe jab sirf isko enable rakhte hai
     let objData = DynamicTaskData.getInstance();
     requestTaskDLLModel.ModuleId = this.props.route.params.pageData.ModuleID;
     requestTaskDLLModel.TaskID = this.props.route.params.taskData
       ? this.props.route.params.taskData.TaskID
       : 0;
-    console.log("GroupAppID :", this.props.route.params.GroupAppID);
+    // console.log("GroupAppID :", this.props.route.params.GroupAppID);
     requestTaskDLLModel.GroupAppId = this.props.route.params.GroupAppID;
     requestTaskDLLModel.AccessLevelId = 20;
     requestTaskDLLModel.GroupId = this.props.route.params.pageData.GroupID;
@@ -297,23 +275,30 @@ export default class AddTask extends React.Component {
       this.props.route.params.pageData.ModuleFeatureLevelID;
 
     let isConnected = false;
-    NetInfo.addEventListener((networkState) => {
-      console.log("Connection type - ", networkState.type);
-      console.log("Is connected? - ", networkState.isConnected);
-      isConnected = networkState.isConnected;
+    // NetInfo.addEventListener((networkState) => {
+    //   console.log("Connection type - ", networkState.type);
+    //   console.log("Is connected? - ", networkState.isConnected);
+    //   isConnected = networkState.isConnected;
+    // });
+
+    NetInfo.fetch().then((state) => {
+      console.log("Connection type - ", state.type);
+      console.log("Is connected? - ", state.isConnected);
+      isConnected = state.isConnected;
     });
 
     let data = null;
     this.setState({ loading: true });
     if (isConnected) {
       //var a = this.props.route.params.pageData.GroupAppsList.split(',');
+
       data = await database.getTaskDLLAsync(
         this.props.route.params.pageData.GroupAppsList
       );
 
       //alert(data.taskDLL);
       if (data.taskDLL == null || data.taskDLL == "{}") {
-        console.log("lading from server");
+        // console.log("lading from server");
 
         data = await objData.getTaskDLLData((result) => {
           this.setDropdownData(result);
@@ -652,7 +637,7 @@ export default class AddTask extends React.Component {
       requestTaskSaveModel.AssignedToUserID = this.state.AssignedToUserID;
       requestTaskSaveModel.Priority = this.state.Priority;
       requestTaskSaveModel.StartDate = this.state.StartDate;
-      requestTaskSaveModel.Description = convertToHtmlString(this.state.value);
+      requestTaskSaveModel.Description = this.state.value; //setContentHTML(this.state.value);
       requestTaskSaveModel.LocationID = this.state.LocationID;
       requestTaskSaveModel.OriginalFileName = this.state.imageName;
       requestTaskSaveModel.Image = this.state.capturedPhotoBase64;
@@ -863,7 +848,10 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                                     actions.setBold,
                                     actions.setItalic,
                                     actions.setUnderline,
+                                    actions.insertLink,
                                     actions.heading1,
+                                    actions.undo,
+                                    actions.redo,
                                   ]}
                                   iconMap={{
                                     [actions.heading1]: ({ tintColor }) => (
@@ -875,9 +863,15 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                                 />
                                 <RichEditor
                                   ref={this.editor}
-                                  height={250}
                                   scrollEnabled={true}
                                   value={this.state.value}
+                                  editorStyle={{
+                                    contentCSSText: `position: absolute; 
+            top: 0; right: 0; bottom: 0; left: 0;
+            min-height: 100px; `,
+                                  }}
+                                  initialFocus={false}
+                                  disabled={false}
                                   onChange={(descriptionText) => {
                                     this.setState({
                                       value: descriptionText,
