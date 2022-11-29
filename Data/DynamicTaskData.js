@@ -121,6 +121,22 @@ export const requestTaskDLLModel = {
   ItemTypeId: 0,
   GetTaskDetailDropdowns: true,
 };
+export const requestPanel2Model = {
+  SignedInUserId: 0,
+  SignedInUserID: 0,
+  UserId: 0,
+  UserID: 0,
+  ClientId: 0,
+  ClientID: 0,
+  DataSetName : '',
+  GroupAppId : 0,
+  GroupAppsList: [],
+  ModuleID : 0,
+  ReportID : 0,
+  ReturnReportMetaData : true,
+  RowID : 0,
+
+}
 export const requestModel = {
   AssignedToUserID: 0,
   SignedInUserId: 0,
@@ -775,4 +791,81 @@ export default class DynamicTaskData {
       .then(onSuccess)
       .catch(onFailure);
   };
+
+  async getDynamicViewContractorListData(groupAppID, ontasksuccess) {
+    //alert(groupAppID);
+    let commonData = CommonDataManager.getInstance();
+    let userData = await commonData.getUserDetail();
+    let clientDetail = await commonData.getClientDetail();
+    let clientAppData = await commonData.getClientAppData();
+    let moduleData = await commonData.getModuleDetail();
+   
+
+    let groupAppList = clientAppData.filter(
+      (e) => e.ClientAppID == requestModel.ClientAppID
+    )[0].GroupAppsList;
+    groupAppList = groupAppList.split(",");
+  
+    requestPanel2Model.SignedInUserId = userData.SignedInUserId;
+    requestPanel2Model.UserId = userData.UserId;
+    requestPanel2Model.ClientId = clientDetail.ClientID;
+    requestPanel2Model.SignedInUserID = userData.SignedInUserId;
+    requestPanel2Model.UserID = userData.UserId;
+    requestPanel2Model.ClientID = clientDetail.ClientID;
+
+    
+
+    if (groupAppID && groupAppID > 0) {
+      requestPanel2Model.GroupAppsList.push(parent(groupAppID));
+      requestPanel2Model.GroupAppId = groupAppID;
+    } else {
+      //alert(groupAppList.length);
+      requestPanel2Model.GroupAppsList = groupAppList;
+      if (groupAppList.length > 1) {
+        //
+      } else {
+      requestPanel2Model.GroupAppId = +groupAppList[0];
+      }
+    }
+  
+    console.log(requestPanel2Model);
+    this._TaskData = null;
+    const onSuccess = async ({ data }) => {
+      
+      if (
+        (data.Result.ErrorMessage != "" && data.Result.ErrorMessage != null) ||
+        data.Result.Errors.length > 0
+      ) {
+        alert(
+          data.Result.ErrorMessage
+            ? data.Result.ErrorMessage
+            : data.Result.Errors[0]
+        );
+        return false;
+      }
+      //alert(JSON.stringify(data));
+      this._TaskData = data.Result;
+       
+      ontasksuccess(this._TaskData);
+    };
+
+    const onFailure = (error) => {
+      //alert('failed');
+      //alert(JSON.stringify(error.response));
+      console.log(error && error.response);
+      udatabase.addlog(
+        "view contractor data from server called api failed request" +
+          JSON.stringify(requestModel)
+      );
+      this.setState({ isLoading: false });
+      ontasksuccess(null);
+    };
+
+    await baseAPI
+      .post("Task/GetDynamicMultipPanelList/", requestPanel2Model)
+      .then(onSuccess)
+      .catch(onFailure);
+
+    //return this._TaskData;
+  }
 }

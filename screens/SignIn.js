@@ -120,6 +120,8 @@ export default class SignIn extends React.Component {
       //('success');
 
       let commonData = CommonDataManager.getInstance();
+      //alert(JSON.stringify(data.Result.ServceNodeMetaData));
+      commonData.setServceNodeMetaData(data.Result.ServceNodeMetaData);
       commonData.setUserDetail(data.Result.UserDetail);
       //alert(JSON.stringify(data.Result.UserDetail));
       let test = await udatabase.setupUserDataAsync(
@@ -131,7 +133,10 @@ export default class SignIn extends React.Component {
         "userDetail",
         JSON.stringify(data.Result.UserDetail)
       );
-
+      AsyncStorage.setItem(
+        "serviceNode",
+        JSON.stringify(data.Result.ServceNodeMetaData)
+      );
       AsyncStorage.setItem(
         "clientList",
         JSON.stringify(data.Result.ClientList)

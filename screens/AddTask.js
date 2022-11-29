@@ -261,6 +261,7 @@ export default class AddTask extends React.Component {
   };
 
   loadDLLDataFromServer = async () => {
+   
     // alert(JSON.stringify(this.props.route.params));//code fat jata yaha pe jab sirf isko enable rakhte hai
     let objData = DynamicTaskData.getInstance();
     requestTaskDLLModel.ModuleId = this.props.route.params.pageData.ModuleID;
@@ -280,7 +281,7 @@ export default class AddTask extends React.Component {
     //   console.log("Is connected? - ", networkState.isConnected);
     //   isConnected = networkState.isConnected;
     // });
-
+    isConnected = true;
     NetInfo.fetch().then((state) => {
       console.log("Connection type - ", state.type);
       console.log("Is connected? - ", state.isConnected);
@@ -288,10 +289,11 @@ export default class AddTask extends React.Component {
     });
 
     let data = null;
-    this.setState({ loading: true });
+   
     if (isConnected) {
+      this.setState({ loading: true });
       //var a = this.props.route.params.pageData.GroupAppsList.split(',');
-
+     
       data = await database.getTaskDLLAsync(
         this.props.route.params.pageData.GroupAppsList
       );
@@ -301,6 +303,7 @@ export default class AddTask extends React.Component {
         // console.log("lading from server");
 
         data = await objData.getTaskDLLData((result) => {
+        
           this.setDropdownData(result);
           if (
             this.props.route.params.pageData.ModuleID == 35 &&
@@ -423,9 +426,18 @@ export default class AddTask extends React.Component {
 
   saveback = (taskmsg) => {
     const { back, navigation } = this.props;
+    if(!this.props.route.params.iscontractor)
     navigation.navigate("Tasks", { Type: "updated", msg: taskmsg });
+    else
+    this.viewContractor();
     //navigation.goBack('focus');
   };
+  
+  viewContractor = async () => {
+   
+    const { back, navigation } = this.props;
+    navigation.goBack();
+  }
 
   renderNavigation = () => {
     debugger;
@@ -714,7 +726,7 @@ export default class AddTask extends React.Component {
       <View>
         {!this.state.isCapturing ? (
           <View>
-            {this.props.route.params.isfrommsg != true ? (
+            {this.props.route.params.isfrommsg != true && this.props.route.params.iscontractor != true ? (
               <Block style={styles.shadow}>{this.renderNavigation()}</Block>
             ) : null}
             <Toast></Toast>

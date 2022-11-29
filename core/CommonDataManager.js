@@ -1,4 +1,5 @@
 import { udatabase } from "../OfflineData/UserAyncDetail";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 export default class CommonDataManager {
   static myInstance = null;
 
@@ -8,6 +9,7 @@ export default class CommonDataManager {
   _groupData = null;
   _clientAppData = null;
   _moduleData = null;
+  _servceNodeMetaData =null;
 
   /**
    * @returns {CommonDataManager}
@@ -49,6 +51,17 @@ export default class CommonDataManager {
       this._clientDetail = JSON.parse(data.userData);
       return this._clientDetail;
     } else return this._clientDetail;
+  }
+  setServceNodeMetaData(userDetail) {
+    this._servceNodeMetaData = userDetail;
+  }
+  async getServceNodeMetaData() {
+    if (this._servceNodeMetaData == null) {
+      const data =  AsyncStorage.getItem(
+        "serviceNode"); // await udatabase.getUserDatAsync("serviceNode");
+      this._servceNodeMetaData = JSON.parse(data);
+      return this._servceNodeMetaData;
+    } else return this._servceNodeMetaData;
   }
 
   setClientDetail(clientDetail) {

@@ -20,6 +20,7 @@ import AddQuotes from "../screens/quotes/AddQuotes";
 import AddQuoteValue from "../screens/quotes/AddQuoteValue";
 import ScannerResult from "../screens/ScannerResult";
 import ScannerScreen from "../screens/Scanner";
+import ViewcontractorScreen from "../screens/Viewcontractor";
 const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -236,6 +237,12 @@ const HomeStack = (props) => {
         component={AddTaskScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="Viewcontractor"
+        component={ViewcontractorScreen}
+        options={{ headerShown: false }}
+      />
+      
       <Stack.Screen
         name="TaskDetail"
         component={TaskDetailScreen}

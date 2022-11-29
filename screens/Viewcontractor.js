@@ -21,9 +21,9 @@ import { Icon } from "../components/";
 import { AntDesign, MaterialIcons, Ionicons, Entypo } from "@expo/vector-icons";
 
 import DynamicTaskData, {
-  requestModel,
-  // Loader,
-  requetActivityModel,
+ 
+  requestPanel2Model,
+ 
   requetActivityActionModel,
   UserReadStatusModel,
 } from "../Data/DynamicTaskData";
@@ -40,7 +40,7 @@ import Toast from "react-native-toast-message";
 import Modal from "react-native-modal";
 
 var tasktimer = null;
-export default class Tasks extends React.Component {
+export default class Viewcontractor extends React.Component {
   constructor(props) {
     super(props);
     //commit changes in 6 June
@@ -77,15 +77,13 @@ export default class Tasks extends React.Component {
       panelNoRowSelect: false,
       isMessageDetailShow: false,
       TypeId: 0,
-      TaskItem: null
+      metaData:null,
+      displayColumn:null
     };
   }
 
   async componentDidMount() {
-    //this.loadData();
-
-    console.log("run after permission");
-
+    this.loadData();
     this.setState({ searchtext: "" });
     // udatabase.addlog("componentDidMount called");
     this.focusListener = this.props.navigation.addListener("focus", (e) => {
@@ -93,30 +91,6 @@ export default class Tasks extends React.Component {
         this.setState({ groupAppID: this.props.route.params.GroupAppID });
       else this.setState({ groupAppID: 0 });
 
-      if (this.props.route.params.Status)
-        this.setState({ filterStatus: this.props.route.params.Status });
-      else this.setState({ filterStatus: "" });
-
-      if (this.props.route.params.msg) {
-        Toast.show({
-          type: "success",
-          text1: this.props.route.params.msg,
-        });
-        this.props.route.params.msg = "";
-      }
-
-      if (
-        this.props.route.params.Type &&
-        this.props.route.params.Type == "updated"
-      ) {
-        console.log("run after permission 5");
-        this.loadData("updated");
-        console.log("run after permission 2");
-      } else {
-        console.log("run after permission 3");
-        this.loadData("");
-        console.log("run after permission 4");
-      }
     });
   }
   clearfilter() {
@@ -124,8 +98,8 @@ export default class Tasks extends React.Component {
     this.loadData("");
   }
   loadData = async (type) => {
-    //alert('yes1');
-    udatabase.addlog("load data function called");
+   
+    
     let isConnected = true;
     NetInfo.addEventListener((networkState) => {
       console.log("Connection type - ", networkState.type);
@@ -135,260 +109,49 @@ export default class Tasks extends React.Component {
     //alert(isConnected);
     let data = null;
     let pageData = this.props.route.params.pageData;
-    //isConnected = false;
-    //isConnected = false;
-    //if(isConnected){
+    let taskItem = this.props.route.params.taskItem;
+    
+    this.setState({ loading: true });
+    
     let objData = DynamicTaskData.getInstance();
-    //this.setState({loading:true});
+    let commonData = CommonDataManager.getInstance();
+    let metaData = commonData.getServceNodeMetaData();
+    
+    metaData = metaData?._z.filter(e=>e.ActivityServiceNodeType ==taskItem.ServiceNodeTypeID);
+    
+    if(metaData && metaData.length >0)
+    {
+        requestPanel2Model.ReportID = metaData[0].Panel2ReportID;
+        requestPanel2Model.DataSetName = metaData[0].Panel2SPName;
+        requestPanel2Model.GroupAppId = this.props.route.params.GroupAppId;
+        requestPanel2Model.ModuleID= this.props.route.params.pageData.ModuleID;
+        requestPanel2Model.RowID = this.props.route.params.taskItem.RowID;
 
-    data = await database.getTaskDataJSONAsync(
-      this.props.route.params.pageData.ClientAppID
-    );
-    console.log("all data", data.taskData);
-    let metadata = await database.getTaskMetaDataJSONAsync(
-      this.props.route.params.pageData.ClientAppID
-    );
-      //alert(JSON.stringify(metadata));
-    let iscalledfromServer = false;
-    if (
-      type != "updated" &&
-      data != null &&
-      data.taskData &&
-      data.taskData.length > 0
-    ) {
-      if (metadata.taskData) {
-        this.setState({
-          SupportReadStatus: metadata.taskData.SupportReadStatus,
-        });
-
-        this.setState({ Mode: metadata.taskData.Mode });
-        this.setState({ EnableNewRecord: metadata.taskData.EnableNewRecord });
-        console.log(
-          "metadata.taskData.EnableNewRecord",
-          metadata.taskData.EnableNewRecord
-        );
-        if (metadata.taskData && metadata.taskData.DoDeltaRefresh == "True") {
-          const timeStamp = metadata.taskData.DatasetTimeStamp;
-          requestModel.DeltaDateTime = new Date(timeStamp);
-        } else {
-          requestModel.DeltaDateTime = null;
-        }
-      }
-      data = data.taskData;
-
-      let taskDetail = await database.getTaskDetailCountAsync(
-        this.props.route.params.pageData.ClientAppID
-      );
-      udatabase.addlog(
-        "task detail count called" + taskDetail.taskDetailDataCount
-      );
-      requetActivityModel.GroupAppID =
-        this.props.route.params.pageData.GroupAppsList;
-      requetActivityModel.AccessLevelID = 30;
-      let d = [];
-      for (let i = 0; i < data.length; i++) {
-        let item = JSON.parse(data[i]);
-        d.push(item);
-      }
-      udatabase.addlog(
-        "task detail data count" + taskDetail.taskDetailDataCount
-      );
-
-      if (this.state.filterStatus != "" || this.state.filterStatus == null)
-        d = d.filter((e) => e.Status == this.state.filterStatus);
-
-      if (this.props.route.params && this.props.route.params.GroupAppID) {
-        d = d.filter((e) => e.GroupAppID == this.props.route.params.GroupAppID);
-      }
-      //this.setState({loading:false});
-      this.setState({ taskData: d });
-      this.setState({ taskfullData: d });
-    } else if (
-      type == "updated" ||
-      data.taskData == null ||
-      (data.taskData.length == 0 && isConnected)
-      // (data.taskData == null && isConnected)
-    ) {
-      let metadata = await database.getTaskMetaDataJSONAsync(
-        this.props.route.params.pageData.ClientAppID
-      );
-
-      if (metadata.taskdata && metadata.taskdata.DoDeltaRefresh == "True") {
-        const timeStamp = metadata.taskdata.DatasetTimeStamp;
-        //alert(timeStamp);
-        requestModel.DeltaDateTime = new Date(timeStamp);
-      } else {
-        requestModel.DeltaDateTime = null;
-      }
-
-      data = await this.loadDataFromServer(pageData, (result) => {
-        data = result[1];
-        iscalledfromServer = true;
-
-        let taskDetail = database.getTaskDetailCountAsync(
-          this.props.route.params.pageData.ClientAppID
-        );
-        //alert(JSON.stringify(taskDetail));
-        udatabase.addlog(
-          "task detail count called" + taskDetail.taskDetailDataCount
-        );
-        requetActivityModel.GroupAppID =
-          this.props.route.params.pageData.GroupAppsList;
-        requetActivityModel.AccessLevelID = 30;
-
-        let d = [];
-        // let details=[];
-        for (let i = 0; i < data.length; i++) {
-          let item = JSON.parse(data[i]);
-          d.push(item);
-        }
-
-        //
-
-        udatabase.addlog(
-          "task detail data count" + taskDetail.taskDetailDataCount
-        );
-
-        if (this.state.filterStatus != "" || this.state.filterStatus == null)
-          d = d.filter((e) => e.Status == this.state.filterStatus);
-
-        if (this.props.route.params && this.props.route.params.GroupAppID) {
-          d = d.filter(
-            (e) => e.GroupAppID == this.props.route.params.GroupAppID
-          );
-        }
-
-        if (tasktimer != null) clearInterval(tasktimer);
-        //alert(result[0].AutoDeltaRefreshFrequencySeconds);
-        if (result[0].AutoDeltaRefreshFrequencySeconds != "") {
-          // console.log("tasktimer is registering");
-          tasktimer = setInterval(() => {
-            this.refreshData();
-            console.log(
-              "tasktimer called, Data refersh at - " +
-                new Date().toLocaleString()
-            );
-            udatabase.addlog(
-              "tasktimer called, Data refersh at - " +
-                new Date().toLocaleString()
-            );
-          }, parseInt(result[0].AutoDeltaRefreshFrequencySeconds) * 1000);
-        }
-
-        this.setState({ loading: false });
-        this.setState({ taskData: d });
-        this.setState({ taskfullData: d });
-      });
     }
-  };
-  async refreshData() {
-    //this.setState({loading:true});
-    let pageData = this.props.route.params.pageData;
-    requestModel.DeltaDateTime = null;
-    //this.setState({loading:true});
-    var data = await this.loadDataFromServer(pageData, (result) => {
-      //this.setState({loading:false});
-      let metadata = result[0];
-      let resultdata = result[1];
-      let taskDetail = database.getTaskDetailCountAsync(
-        this.props.route.params.pageData.ClientAppID
-      );
-      //alert(JSON.stringify(taskDetail));
-      udatabase.addlog(
-        "task detail count called" + taskDetail.taskDetailDataCount
-      );
-
-      requetActivityModel.GroupAppID =
-        this.props.route.params.pageData.GroupAppsList;
-      requetActivityModel.AccessLevelID = 30;
-
-      let d = [];
-      for (let i = 0; i < resultdata.length; i++) {
-        let item = JSON.parse(resultdata[i]);
-        d.push(item);
-      }
-      udatabase.addlog(
-        "task detail data count" + taskDetail.taskDetailDataCount
-      );
-
-      if (this.state.filterStatus != "" || this.state.filterStatus == null)
-        d = d.filter((e) => e.Status == this.state.filterStatus);
-
-      if (this.props.route.params && this.props.route.params.GroupAppID) {
-        d = d.filter((e) => e.GroupAppID == this.props.route.params.GroupAppID);
-      }
-
-      if (tasktimer != null) clearInterval(tasktimer);
-
-      if (
-        tasktimer == null &&
-        metadata.AutoDeltaRefreshFrequencySeconds != ""
-      ) {
-        tasktimer = setInterval(() => {
-          this.refreshData();
-          udatabase.addlog(
-            "tasktimer called, Data refersh at - " + new Date().toLocaleString()
-          );
-        }, parseInt(metadata.AutoDeltaRefreshFrequencySeconds) * 1000);
-      }
-
-      this.setState({ loading: false });
-      this.setState({ taskData: d });
-      this.setState({ taskfullData: d });
-    });
-  }
-
-  loadDataFromServer = async (pageData, onservercallback) => {
+   
     this.setState({ loading: true });
-    let objData = DynamicTaskData.getInstance();
-    requestModel.SPName =
-      this.props.route.params.ismsg == true
-        ? "getMessagesForUser"
-        : this.props.route.params.pageData.ReportSPName; ///requestModel.SPName = 'getMessagesForUser'; this.props.route.params.screenType == 'message' ? 'getMessagesForUser' :
-    requestModel.ClientAppID = this.props.route.params.pageData.ClientAppID;
-    requestModel.MyMessage =
-      this.props.route.params.ismsg == true ? true : false;
-    //requestModel.GroupAppId = this.props.route.params.pageData.GroupAppsList;
-    requestModel.AccessLevelId = 30;
-    requestModel.ReportName = this.props.route.params.pageData.ReportName;
-    requestModel.ReportID = this.props.route.params.pageData.ReportID;
-    requestModel.GroupId = this.props.route.params.pageData.GroupID;
-    requestModel.pageNum = this.state.pageNum;
-
-    this.setState({ loading: true });
-    let data = objData.getDynamicTaskListData(
+    data = objData.getDynamicViewContractorListData(
       this.props.route.params.pageData.GroupAppID,
       (result) => {
         this.setState({ loading: false });
         if (result != null) {
-          let metaData = result[0];
-          let resultData = result[1];
+         
+         this.setState({actions:this.props.route.params.actions});
+         this.setState({metaData:result.TaskList.MetaData});
+         this.setState({metaData:result.TaskList.DisplayColumJson});
+       
+       
+        this.setState({ loading: false });
+        this.setState({ taskData: result.TaskList.QueryData });
+        this.setState({ taskfullData: result.TaskList.QueryData });
 
-          if (metaData) {
-            //alert(JSON.stringify(metaData));
-            this.setState({ SupportReadStatus: metaData.SupportReadStatus });
-            this.setState({ Mode: metaData.Mode });
-            this.setState({ EnableNewRecord: metaData.EnableNewRecord });
-            //console.log('metadata.taskData.EnableNewRecord', result.MetaData.EnableNewRecord);
-          }
-
-          // let taskdata = [];
-          // for(let i=0; i<resultData.length; i++)
-          // {
-          //   let item  = resultData[i];
-          //   //item.isExpand = false;
-          //   taskdata.push(item);
-          //   //console.log(taskdata);
-          // }
-
-          this.setState({ loading: false });
-          const item_array = [metaData, resultData];
-          onservercallback(item_array);
         } else this.setState({ loading: false });
         //return taskdata;
       }
     );
+   
   };
+ 
 
   async getActions(item, pageData) {
     let objData = DynamicTaskData.getInstance();
@@ -396,6 +159,7 @@ export default class Tasks extends React.Component {
     console.log(pageData);
     //this.setState({actions:data});
   }
+
 
 
   handleSearch = async (text) => {
@@ -414,8 +178,8 @@ export default class Tasks extends React.Component {
         //alert(entry.Number);
         if (
           entry &&
-          entry.Number &&
-          entry.Number.toString().indexOf(text) !== -1
+          entry.Status &&
+          entry.Status.toString().indexOf(text) !== -1
         ) {
           results.push(entry);
         }
@@ -426,8 +190,8 @@ export default class Tasks extends React.Component {
           entry = masterDataSource[index];
           if (
             entry &&
-            entry.Title &&
-            entry.Title.toUpperCase().indexOf(text) !== -1
+            entry.ContractorName &&
+            entry.ContractorName.toUpperCase().indexOf(text) !== -1
           ) {
             results.push(entry);
           }
@@ -531,33 +295,33 @@ export default class Tasks extends React.Component {
                   color: scheme === "dark" ? "white" : "black",
                 }}
               >
-                {" "}
-                {this.props.route.params.pageData.ReportMenuLabel.length > 12
-                  ? this.props.route.params.pageData.ReportMenuLabel.substring(
-                      0,
-                      12
-                    ) + ".."
-                  : this.props.route.params.pageData.ReportMenuLabel}{" "}
-                {this.props.route.params?.product?.title}
+              Contractor List
               </Text>
             </Block>
           }
           rightStyle={{ alignItems: "center" }}
           leftStyle={{ paddingTop: 3, flex: 0.3, fontSize: 18 }}
+          left={
+            <Block flex row>
+              <TouchableOpacity onPress={() => this.handleLeftPress()}>
+                <Icon
+                  size={20}
+                  style={{ paddingRight: 20, paddingTop: 20 }}
+                  family="entypo"
+                  name="chevron-left"
+                  color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
+                />
+              </TouchableOpacity>
+            </Block>
+          }
            titleStyle={[
             styles.title,
             { color: theme.COLORS[white ? "WHITE" : "ICON"] },
           ]}
           right={
             <Block flex row style={[styles.searchbutton]}>
-              <TouchableOpacity onPress={() => this.redirectToScanner()}>
-                <MaterialIcons
-                  name="qr-code-scanner"
-                  size={21}
-                  color="black"
-                  style={{ paddingRight: 10 }}
-                />
-              </TouchableOpacity>
+             
+             
               <TouchableOpacity onPress={() => this.showSearch()}>
                 <Icon
                   size={21}
@@ -567,38 +331,13 @@ export default class Tasks extends React.Component {
                   color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
                 />
               </TouchableOpacity>
-              {/* {this.state.EnableNewRecord  == true ?  */}
-              {!this.props.route.params.ismsg ? (
-                <TouchableOpacity onPress={() => this.addtask()}>
-                  <Icon
-                    size={21}
-                    style={{ paddingRight: 5 }}
-                    family="entypo"
-                    name="plus"
-                    color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
-                  />
-                </TouchableOpacity>
-              ) : null}
-              {/* :  null} */}
-              {!this.props.route.params.ismsg ? (
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("GroupFilter", {
-                      pageData: this.props.route.params.pageData,
-                    })
-                  }
-                >
-                  <Entypo
-                    style={{ paddingRight: Platform.OS === "ios" ? 10 : 0 }}
-                    name="funnel"
-                    size={21}
-                    color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
-                  />
-                </TouchableOpacity>
-              ) : null}
+          
+          
+             
+             
               <TouchableOpacity
                 style={{ paddingLeft: 5, paddingRight: 15 }}
-                onPress={() => this.refreshData()}
+                onPress={() => this.loadData('')}
               >
                 <Ionicons
                   size={21}
@@ -615,45 +354,7 @@ export default class Tasks extends React.Component {
       </Block>
     );
   };
-  viewContractor = async () => {
-    const { navigation } = this.props;
-    let commonData = CommonDataManager.getInstance();
-    let apps = await commonData.getClientAppData();
-    apps = apps.filter(
-      (e) => e.ClientAppID == this.props.route.params.pageData.ClientAppID
-    );
-    var groupapps = apps[0].GroupAppsList.split(",");
-    navigation.navigate("Viewcontractor", {
-      pageData: this.props.route.params.pageData,
-      taskItem: this.state.TaskItem,
-      taskDetail: this.state.taskDetail,
-      actions:this.state.actions,
-      GroupAppID: groupapps[0],
-    });
-  }
-  addtask = async () => {
-    //alert(this.props.route.params.pageData.ClientAppID);
-    const { navigation } = this.props;
-    let commonData = CommonDataManager.getInstance();
-    let apps = await commonData.getClientAppData();
-    apps = apps.filter(
-      (e) => e.ClientAppID == this.props.route.params.pageData.ClientAppID
-    );
-    var groupapps = apps[0].GroupAppsList.split(",");
-    if (groupapps.length > 1) {
-      navigation.navigate("Groups", {
-        pageData: this.props.route.params.pageData,
-        screen: "addtask",
-        GroupAppID: groupapps[0],
-      });
-    } else {
-      navigation.navigate("AddTask", {
-        pageData: this.props.route.params.pageData,
-        GroupAppID: groupapps[0],
-      });
-    }
-    //alert(groupapps.length);
-  };
+ 
 
   hideaction = async () => {
     this.setState({ isActionVisible: false });
@@ -661,38 +362,108 @@ export default class Tasks extends React.Component {
   showaction = async () => {
     this.setState({ isActionVisible: true });
   };
-  movescreen(item) {
+
+  
+
+  setTaskModel = async (item, index, isexpend) => {
+    try {
+      let commonData = CommonDataManager.getInstance();
+      console.log("Item data", JSON.stringify(item));
+     
+      
+        //why we need this data parse here?
+        let taskKeyValue = [];
+        //alert(JSON.stringify(finalData));
+        let fields = this.state.DisplayColumJson;
+        if (fields) {
+         
+          let selectedFields = (fields + ",").split(",");
+          //alert(selectedFields.length);
+          for (var key in item) {
+            if (
+              !key.endsWith("ID") &&
+              !key.endsWith("id") &&
+              !key.endsWith("...")
+            ) {
+              if (selectedFields.includes(key)) {
+                let taskValue = {};
+                taskValue.Key = key;
+                taskValue.Value = item[key];
+                taskKeyValue.push(taskValue);
+              }
+            }
+          }
+
+        } else {
+          for (var key in item) {
+            if (
+              !key.endsWith("ID") &&
+              !key.endsWith("id") &&
+              !key.endsWith("...") &&
+              !key.endsWith("Title")
+            ) {
+              let taskValue = {};
+              taskValue.Key = key;
+              taskValue.Value = item[key];
+              taskKeyValue.push(taskValue);
+            }
+          }
+        }
+
+        // if(this.props.route.params.ismsg == true)
+        // this.setState({MsgDetailKeyValue : taskKeyValue});
+        // else
+        this.setState({ TaskDetailKeyValue: taskKeyValue });
+     
+        
+        this.setState({
+          taskData: this.state.taskData.map((item) => {
+            item.isExpand = false;
+            return item;
+          }),
+        });
+
+        let targetPost = this.state.taskData[index];
+        targetPost.isExpand = isexpend;
+        this.state.taskData[index] = targetPost;
+        var updatedTask = this.state.taskData;
+        //Loader.isLoading = false;
+        //this.setState({loading:false});
+        this.setState({
+          taskData: updatedTask,
+        });
+       
+        
+    
+     
+    } catch (e) {
+      //Loader.isLoading = false;
+      this.setState({ loading: false });
+    }
+    //this.setState({loading:false});
+    // console.log("Loader", Loader.isLoading);
+    //Loader.isLoading = false;
+  };
+  loaderoff() {
+    //alert('ysss');
+    // Loader.isLoading = false;
+  }
+  movescreen() {
+    let item = this.props.route.params.taskItem;
+   
     const { navigation } = this.props;
-    if (this.props.route.params.ismsg == true) {
-      if (item.ActionRowIDKeyTypeID == 10) {
-        navigation.navigate("TaskDetail", {
-          pageData: this.props.route.params.pageData,
-          taskData: this.state.taskDetail,
-          item: item,
-          isfrommsg: true,
-        });
-      } else {
-        //need to open message
-        navigation.navigate("TaskMessageDetail", {
-          pageData: this.props.route.params.pageData,
-          taskItem: this.state.taskDetail,
-          item: item,
-          screenmode: "edit",
-        });
-      }
-    } else {
-      this.props.route.params.taskId = this.state.taskDetail.RowID;
-      this.props.route.params.StatusID = this.state.taskDetail.StatusID;
+    this.props.route.params.taskId = this.props.route.params.taskDetail.RowID;
+      this.props.route.params.StatusID = this.props.route.params.taskDetail.StatusID;
       navigation.navigate("TaskDetail", {
         pageData: this.props.route.params.pageData,
-        taskData: this.state.taskDetail,
+        taskData: this.props.route.params.taskDetail,
         item: item,
-        isfrommsg: true,
+        isfrommsg:false,
+        iscontractor: true,
       });
-    }
   }
-
-  setAction = async (actions, items) => {
+  setAction = async (actions) => {
+    items = this.props.route.params.taskItem;
     this.setState({ actionName: actions.ActionName });
     requetActivityActionModel.SPName = actions.SPName;
     requetActivityActionModel.ActionID = actions.ActionID;
@@ -714,252 +485,9 @@ export default class Tasks extends React.Component {
         type: "success",
         text1: "Action has been done",
       });
-      this.loadData("updated");
+      //this.loadData("updated");
     });
   };
-
-  setTaskModel = async (item, index, isexpend) => {
-    try {
-      let commonData = CommonDataManager.getInstance();
-      
-      this.setState({TaskItem : item });
-      this.setState({ ActionRowID: item.ActionRowID });
-      this.setState({ SelectedRowId: RowID });
-      this.setState({ ActionRowIDKeyTypeID: item.ActionRowIDKeyTypeID });
-      this.setState({ RowIDKeyTypeID: item.RowIDKeyTypeID });
-      this.setState({ PermissionID: item.PermissionID });
-      this.setState({ currentRowServiceNodeType: item.ServiceNodeTypeID });
-      this.setState({ TypeId: item.TypeID });
-      if (
-        item.ServiceNodeTypeID != this.state.currentRowServiceNodeType ||
-        this.state.Mode != "Panel1"
-      ) {
-        this.setState({ panelNoRowSelect: true });
-        this.setState({ isMessageDetailShow: true });
-      } else {
-        this.setState({ panelNoRowSelect: false });
-        this.setState({ isMessageDetailShow: false });
-      }
-      console.log("Item data", JSON.stringify(item));
-      let RowID =
-        item.ActionRowIDKeyTypeID == 10 && this.props.route.params.ismsg == true
-          ? item.ActionRowID
-          : item.RowID;
-
-      let taskDetail = await database.getTaskDetailAsync(RowID);
-
-      //
-      let clientAppData = await commonData.getClientAppData();
-      clientAppData = clientAppData.filter(
-        (e) => e.ClientAppID == this.props.route.params.pageData.ClientAppID
-      );
-
-      let filterApp;
-      if (
-        clientAppData.length > 0 &&
-        clientAppData[0].ConfigFields != "" &&
-        JSON.parse(clientAppData[0].ConfigFields)
-      ) {
-        filterApp = JSON.parse(clientAppData[0].ConfigFields);
-      }
-      //alert(JSON.stringify(filterApp));
-      filterApp = filterApp
-        ? filterApp.Fields.filter(
-            (e) => e.FieldName == "Fields4MobileAppExpandedRow"
-          )
-        : null;
-
-      if (taskDetail && taskDetail.taskDetailData != null) {
-        let finalData = JSON.parse(taskDetail.taskDetailData);
-
-        // console.log("final data", finalData);
-        /*if (!this.props.route.params.ismsg) {
-          var createddate = new Date(finalData.CreatedDate);
-          var formattedDate = format(createddate, "MMMM do, yyyy H:mm a");
-          finalData.formattedCreatedDate = formattedDate;
-
-          if (finalData.StartDate) {
-            var startdate = new Date(finalData.StartDate);
-            formattedDate = format(startdate, "MMMM do, yyyy H:mm a");
-            finalData.formattedStartDate = formattedDate;
-            this.setState({ taskDetail: finalData });
-          }
-        }*/
-
-        //why we need this data parse here?
-        let taskKeyValue = [];
-        //alert(JSON.stringify(finalData));
-        item.Description = this.props.route.params.ismsg
-          ? finalData.MsgText
-          : finalData.Description;
-        //item.MsgSubject = this.props.route.params.ismsg ? finalData.MsgSubject : "";
-        console.log("final data", finalData);
-        this.setState({ taskDetail: finalData });
-
-        //item.Description = finalData.Description;
-        //what is the use of taskId ?
-        // item.TaskStatusID = finalData.TaskStatusID;
-        item.TaskStatus = finalData.TaskStatus;
-        if (filterApp) {
-          let fields = filterApp.map((e) => e.DefaultValue);
-          //alert(fields);
-          let selectedFields = (fields + ",").split(",");
-          //alert(selectedFields.length);
-          for (var key in item) {
-            if (
-              !key.endsWith("ID") &&
-              !key.endsWith("id") &&
-              !key.endsWith("...")
-            ) {
-              if (selectedFields.includes(key)) {
-                let taskValue = {};
-                taskValue.Key = key;
-                taskValue.Value = item[key];
-                taskKeyValue.push(taskValue);
-              }
-            }
-          }
-
-          let taskValue = {};
-          taskValue.Key = "Description";
-          taskValue.Value = this.props.route.params.ismsg
-            ? finalData.MsgText
-            : finalData.Description;
-          taskKeyValue.push(taskValue);
-        } else {
-          for (var key in item) {
-            if (
-              !key.endsWith("ID") &&
-              !key.endsWith("id") &&
-              !key.endsWith("...") &&
-              !key.endsWith("Title")
-            ) {
-              let taskValue = {};
-              taskValue.Key = key;
-              taskValue.Value = item[key];
-              taskKeyValue.push(taskValue);
-            }
-          }
-        }
-
-        // if(this.props.route.params.ismsg == true)
-        // this.setState({MsgDetailKeyValue : taskKeyValue});
-        // else
-        this.setState({ TaskDetailKeyValue: taskKeyValue });
-        //alert(JSON.stringify(finalData.Actions));
-        //it required for show action
-        if (finalData.Actions)
-          this.setState({ actions: JSON.parse(finalData.Actions).Actions });
-        else this.setState({ actions: "" });
-
-        this.setState({
-          taskData: this.state.taskData.map((item) => {
-            item.isExpand = false;
-            return item;
-          }),
-        });
-
-        let targetPost = this.state.taskData[index];
-        targetPost.isExpand = isexpend;
-        this.state.taskData[index] = targetPost;
-        var updatedTask = this.state.taskData;
-        //Loader.isLoading = false;
-        //this.setState({loading:false});
-        this.setState({
-          taskData: updatedTask,
-        });
-        //alert(JSON.stringify(this.state.TaskDetailKeyValue));
-        //this.setState({loading:false});
-
-        //what is the use of this piece of code here?
-        if (
-          (!item.ReadStatusID || item.ReadStatusID == 0) &&
-          this.state.SupportReadStatus
-        ) {
-          this.setKeyUserReadStatus(item, index, finalData);
-          //here we need to set ReadStatusID in offline data for item ROWID and set the status 1 for unread future
-          this.state.messageData[index].ReadStatusID == 1;
-          this.setState({ messageData: this.state.messageData });
-          item.ReadStatusID = 1;
-          database.setupMessageAsync(item.RowID, item);
-        }
-      } else {
-        //no data found need to pull data from server
-        let objData = DynamicTaskData.getInstance();
-        var taskIds = [];
-        taskIds.push(item.RowID);
-        this.setState({ loading: true });
-        objData.getDynamicTaskDetailData(
-          taskIds,
-          this.props.route.params.ismsg,
-          (result) => {
-            //alert(JSON.stringify(result));
-            let finalData = JSON.parse(result);
-            if (this.props.route.params.ismsg == true)
-              this.setTaskData(
-                finalData,
-                item,
-                filterApp,
-                index,
-                isexpend,
-                true
-              );
-
-            if (!this.props.route.params.ismsg) {
-              var createddate = new Date(finalData.CreatedDate);
-              var formattedDate = format(createddate, "MMMM do, yyyy H:mm a");
-              finalData.formattedCreatedDate = formattedDate;
-
-              if (finalData.StartDate) {
-                var startdate = new Date(finalData.StartDate);
-                formattedDate = format(startdate, "MMMM do, yyyy H:mm a");
-                finalData.formattedStartDate = formattedDate;
-              }
-            }
-            if (finalData.ActionRowIDKeyTypeID != 10) {
-              //message case if message is there then we need to fetch message job detail
-              //alert(finalData.AppliesToOCID);
-              //alert(JSON.stringify(finalData));
-              taskIds = [];
-              taskIds.push(finalData.AppliesToOCID);
-              objData.getDynamicTaskDetailData(taskIds, false, (msgresult) => {
-                finalData = JSON.parse(msgresult);
-                this.setState({ taskDetail: finalData });
-                this.setTaskData(
-                  finalData,
-                  item,
-                  filterApp,
-                  index,
-                  isexpend,
-                  false
-                );
-              });
-            } else {
-              this.setTaskData(
-                finalData,
-                item,
-                filterApp,
-                index,
-                isexpend,
-                false
-              );
-            }
-          }
-        );
-      }
-    } catch (e) {
-      //Loader.isLoading = false;
-      this.setState({ loading: false });
-    }
-    //this.setState({loading:false});
-    // console.log("Loader", Loader.isLoading);
-    //Loader.isLoading = false;
-  };
-  loaderoff() {
-    //alert('ysss');
-    // Loader.isLoading = false;
-  }
-
   setTaskData(finalData, item, filterApp, index, isexpend, ismsg) {
     this.setState({ taskDetail: finalData });
     let taskKeyValue = [];
@@ -1085,24 +613,34 @@ export default class Tasks extends React.Component {
   getColorcode(priority) {
     let color = "#0549FD";
     if (priority) {
-      if (priority.indexOf("Critical") > -1) color = "#ff8989";
-      else if (priority.indexOf("High") > -1) color = "#89b3ff";
-      else if (priority.indexOf("Medium") > -1) color = "#92d050";
-      else if (priority.indexOf("Low") > -1) color = "#ffe181";
+      if (priority.indexOf("Completed") > -1) color = "#ff8989";
+      else if (priority.indexOf("Rejected") > -1) color = "#89b3ff";
+      else if (priority.indexOf("Work done") > -1) color = "#92d050";
+      else if (priority.indexOf("Waiting quote") > -1) color = "#ffe181";
+      else if (priority.indexOf("Quote Saved") > -1) color = "#33FFDD";
+      else if (priority.indexOf("Waiting serviceman") > -1) color = "#33FF64";
+      else if (priority.indexOf("Waiting bid acceptance") > -1) color = "#FFBB33";
+      else if (priority.indexOf("Waiting client approval") > -1) color = "#FF5B33";
+      else if (priority.indexOf("Waiting verification") > -1) color = "#33C1FF";
+      else if (priority.indexOf("Out of service") > -1) color = "#4C33FF";
+      else if (priority.indexOf("Cancelled") > -1) color = "#E633FF";
+      else if (priority.indexOf("Inactive") > -1) color = "#FF3390";
+      
     }
     return color;
   }
   renderItem = ({ item, index }) => {
     const { navigation } = this.props;
     //colors[index % colors.length]
+   
     let colors = ["#FD0527", "#051CFD", "#FDD405", "#23FD05"];
     return (
       <Block>
         <Block card shadow style={styles.product}>
           <Block row>
-            <View
+          <View
               style={{
-                backgroundColor: this.getColorcode(item.Priority),
+                backgroundColor: this.getColorcode(item.Status),
                 alignItems: "center",
                 justifyContent: "center",
                 width: 40,
@@ -1124,7 +662,7 @@ export default class Tasks extends React.Component {
                   fontWeight: "bold",
                 }}
               >
-                {this.getcode(item.Priority)}
+                {this.getcode(item.Status)}
               </Text>
             </View>
             {/* <Block style={{  backgroundColor: this.getColorcode(item.Priority), justifyContent: 'center', alignItems:'center', width:12}}>
@@ -1157,7 +695,7 @@ export default class Tasks extends React.Component {
                     }}
                   >
                     {" "}
-                    {item.Number}
+                    {/* {item.Rank} */}
                     {item.isExpand}
                   </Text>
                 </Block>
@@ -1191,15 +729,15 @@ export default class Tasks extends React.Component {
                     {!item.ReadStatusID &&
                     this.state.SupportReadStatus == "True" ? (
                       <Text size={18} style={styles.boldtitle}>
-                        {item.Title.length > 70
-                          ? item.Title.substring(0, 70) + "..."
-                          : item.Title}
+                        {item.ContractorName.length > 70
+                          ? item.ContractorName.substring(0, 70) + "..."
+                          : item.ContractorName}
                       </Text>
                     ) : (
                       <Text size={18} style={styles.title}>
-                        {item.Title.length > 70
-                          ? item.Title.substring(0, 70) + "..."
-                          : item.Title}
+                        {item.ContractorName.length > 70
+                          ? item.ContractorName.substring(0, 70) + "..."
+                          : item.ContractorName}
                       </Text>
                     )}
                   </TouchableWithoutFeedback>
@@ -1213,7 +751,7 @@ export default class Tasks extends React.Component {
                     >
                       <Text size={18} style={styles.title}>
                         {/* {this.state.taskDetail?.Title} */}
-                        {item.Title}
+                        {item.ContractorName}
                       </Text>
                     </TouchableWithoutFeedback>
                     <View
@@ -1223,7 +761,7 @@ export default class Tasks extends React.Component {
                         marginBottom: 10,
                       }}
                     />
-                    <View>
+                     <View>
                       <Block style={styles.actioncontainer}>
                         <Block style={styles.item}>
                           <Button
@@ -1239,7 +777,7 @@ export default class Tasks extends React.Component {
                         <Block style={styles.item}>
                           <Button
                             round
-                            onPress={() => this.movescreen(item)}
+                            onPress={() => this.movescreen()}
                             shadowless
                             color="#EAE7E7"
                             textStyle={styles.actionbutton}
@@ -1247,20 +785,10 @@ export default class Tasks extends React.Component {
                             Open
                           </Button>
                         </Block>
-                        {/* { this.state.taskDetail && (this.state.taskDetail.ServiceNodeType == 30 || this.state.taskDetail.ActivityTypeID ==15) ? 
-            <Block style={styles.item}>
-              <Button round
-               onPress={() => navigation.navigate('AddQuotes', {taskId : this.state.taskDetail.RowID, StatusID:this.state.taskDetail.StatusID})}
-                shadowless
-                color='#EAE7E7'
-                textStyle={styles.actionbutton}
-                >
-                Quote
-              </Button>
-            </Block>
-            : null}  */}
+                       
+                       
                       </Block>
-                    </View>
+                    </View> 
 
                     <View style={{ flex: 1 }}>
                       <Modal
@@ -1313,7 +841,7 @@ export default class Tasks extends React.Component {
                                             round
                                             shadowless
                                             onPress={() =>
-                                              this.setAction(buttonInfo, item)
+                                              this.setAction(buttonInfo)
                                             }
                                             color="#EAE7E7"
                                             textStyle={styles.actionbutton}
@@ -1339,28 +867,7 @@ export default class Tasks extends React.Component {
                         marginBottom: 10,
                       }}
                     />
-                    <TouchableOpacity
-                      onPress={() => this.setTaskModel(item, index, false)}
-                    >
-                      {!this.props.route.params.ismsg ? (
-                        <Text
-                          style={
-                            (styles.textcolor,
-                            { fontWeight: "bold", paddingBottom: 10 })
-                          }
-                          size={theme.SIZES.BASE * 0.9}
-                          color={scheme === "dark" ? "#c7c5bd" : "black"}
-                        >
-                          {this.state.taskDetail
-                            ? this.state.taskDetail?.CategoryDesc +
-                              "\\" +
-                              this.state.taskDetail?.SubCategoryDesc +
-                              "\\" +
-                              this.state.taskDetail?.SubCategoryTaskDesc
-                            : null}
-                        </Text>
-                      ) : null}
-                    </TouchableOpacity>
+                   
 
                     <Block visible={this.state.loading}>
                       {this.state.TaskDetailKeyValue
@@ -1426,29 +933,9 @@ export default class Tasks extends React.Component {
                     </Block>
                   </Block>
                   <Block row flex style={{ paddingBottom: 7 }}>
-                    <Icon
-                      size={22}
-                      family="entypo"
-                      name="eye"
-                      style={styles.textcolor}
-                      color={theme.COLORS["ICON"]}
-                    />
+                   
+                   
 
-                    <TouchableOpacity style={{ paddingLeft: 0 }} onPress={() => this.viewContractor()}>
-                      <Text
-                        style={
-                          (styles.textcolor,
-                          {
-                            fontWeight: "bold",
-                            paddingLeft: 10,
-                            paddingTop: 5,
-                          })
-                        }
-                        color={scheme === "dark" ? "#c7c5bd" : "black"}
-                      >
-                        View Contractor
-                      </Text>
-                    </TouchableOpacity>
                   </Block>
                 </Block>
               )}
