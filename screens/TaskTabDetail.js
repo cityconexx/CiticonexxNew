@@ -135,6 +135,12 @@ export default class TaskTabDetail extends React.Component {
             name="Messages"
             children={() => <TaskMessages {...this.props} />}
           />
+          {/* {this.props.route.params.taskData != null ? (
+            <Tab.Screen
+              name="Document"
+              children={() => <DocumentUpload {...this.props} />}
+            />
+          ) : null} */}
         </Tab.Navigator>
       </>
     );

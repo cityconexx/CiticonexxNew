@@ -38,6 +38,7 @@ import Spinner from "react-native-loading-spinner-overlay";
 import { udatabase } from "../OfflineData/UserAyncDetail";
 import Toast from "react-native-toast-message";
 import Modal from "react-native-modal";
+import { tr } from "date-fns/locale";
 
 var tasktimer = null;
 export default class Tasks extends React.Component {
@@ -54,6 +55,7 @@ export default class Tasks extends React.Component {
       taskfullData: null,
       groupAppID: 0,
       isexpand: "false",
+      // comefromContractor: false,
       isSearchShow: false,
       pageSize: 200,
       filterStatus: "",
@@ -77,7 +79,7 @@ export default class Tasks extends React.Component {
       panelNoRowSelect: false,
       isMessageDetailShow: false,
       TypeId: 0,
-      TaskItem: null
+      TaskItem: null,
     };
   }
 
@@ -89,6 +91,7 @@ export default class Tasks extends React.Component {
     this.setState({ searchtext: "" });
     // udatabase.addlog("componentDidMount called");
     this.focusListener = this.props.navigation.addListener("focus", (e) => {
+      // console.log("contractor", this.props.route.params.comefromContractor);
       if (this.props.route.params.GroupAppID)
         this.setState({ groupAppID: this.props.route.params.GroupAppID });
       else this.setState({ groupAppID: 0 });
@@ -148,7 +151,7 @@ export default class Tasks extends React.Component {
     let metadata = await database.getTaskMetaDataJSONAsync(
       this.props.route.params.pageData.ClientAppID
     );
-      //alert(JSON.stringify(metadata));
+    //alert(JSON.stringify(metadata));
     let iscalledfromServer = false;
     if (
       type != "updated" &&
@@ -397,7 +400,6 @@ export default class Tasks extends React.Component {
     //this.setState({actions:data});
   }
 
-
   handleSearch = async (text) => {
     //alert(text);
     this.setState({ searchtext: text });
@@ -544,7 +546,7 @@ export default class Tasks extends React.Component {
           }
           rightStyle={{ alignItems: "center" }}
           leftStyle={{ paddingTop: 3, flex: 0.3, fontSize: 18 }}
-           titleStyle={[
+          titleStyle={[
             styles.title,
             { color: theme.COLORS[white ? "WHITE" : "ICON"] },
           ]}
@@ -609,13 +611,12 @@ export default class Tasks extends React.Component {
               </TouchableOpacity>
             </Block>
           }
-          
         />
         {this.state.isSearchShow ? this.renderHeader() : null}
       </Block>
     );
   };
-  viewContractor = async () => {
+  viewContractor = async (index) => {
     const { navigation } = this.props;
     let commonData = CommonDataManager.getInstance();
     let apps = await commonData.getClientAppData();
@@ -627,10 +628,11 @@ export default class Tasks extends React.Component {
       pageData: this.props.route.params.pageData,
       taskItem: this.state.TaskItem,
       taskDetail: this.state.taskDetail,
-      actions:this.state.actions,
+      actions: this.state.actions,
+      // comefromContractor: false,
       GroupAppID: groupapps[0],
     });
-  }
+  };
   addtask = async () => {
     //alert(this.props.route.params.pageData.ClientAppID);
     const { navigation } = this.props;
@@ -721,8 +723,8 @@ export default class Tasks extends React.Component {
   setTaskModel = async (item, index, isexpend) => {
     try {
       let commonData = CommonDataManager.getInstance();
-      
-      this.setState({TaskItem : item });
+
+      this.setState({ TaskItem: item });
       this.setState({ ActionRowID: item.ActionRowID });
       this.setState({ SelectedRowId: RowID });
       this.setState({ ActionRowIDKeyTypeID: item.ActionRowIDKeyTypeID });
@@ -854,11 +856,16 @@ export default class Tasks extends React.Component {
 
         this.setState({
           taskData: this.state.taskData.map((item) => {
+            // if (this.props.route.params.comefromContractor)
+            //   item.isExpand = true;
+            // else
             item.isExpand = false;
             return item;
           }),
         });
 
+        // if (this.props.route.params.comefromContractor) isexpend = true;
+        // else isexpend = isexpend;
         let targetPost = this.state.taskData[index];
         targetPost.isExpand = isexpend;
         this.state.taskData[index] = targetPost;
@@ -1434,7 +1441,10 @@ export default class Tasks extends React.Component {
                       color={theme.COLORS["ICON"]}
                     />
 
-                    <TouchableOpacity style={{ paddingLeft: 0 }} onPress={() => this.viewContractor()}>
+                    <TouchableOpacity
+                      style={{ paddingLeft: 0 }}
+                      onPress={() => this.viewContractor(index)}
+                    >
                       <Text
                         style={
                           (styles.textcolor,

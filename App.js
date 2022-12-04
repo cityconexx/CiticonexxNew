@@ -92,30 +92,30 @@ export default class App extends React.Component {
     } catch (error) {
       console.log("camera :error");
     }
-    try {
-      const foregroundPermission =
-        await Location.requestForegroundPermissionsAsync();
-      let locationSubscrition = null;
-      if (foregroundPermission.granted) {
-        locationSubscrition = Location.watchPositionAsync(
-          {
-            // Tracking options
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 10,
-          },
-          (location) => {
-            // this.setState({ lat: location.coords.latitude });
-            // this.setState({ long: location.coords.longitude });
-            // this.props.route.params.pageData.lat = location.coords.latitude;
-            // this.props.route.params.pageData.long = location.coords.longitude;
-            console.log(location.coords.latitude);
-            console.log(location.coords.longitude);
-          }
-        );
-      }
-    } catch (error) {
-      console.log("Location:", error);
-    }
+    // try {
+    //   const foregroundPermission =
+    //     await Location.requestForegroundPermissionsAsync();
+    //   let locationSubscrition = null;
+    //   if (foregroundPermission.granted) {
+    //     locationSubscrition = Location.watchPositionAsync(
+    //       {
+    //         // Tracking options
+    //         accuracy: Location.Accuracy.High,
+    //         distanceInterval: 10,
+    //       },
+    //       (location) => {
+    //         // this.setState({ lat: location.coords.latitude });
+    //         // this.setState({ long: location.coords.longitude });
+    //         // this.props.route.params.pageData.lat = location.coords.latitude;
+    //         // this.props.route.params.pageData.long = location.coords.longitude;
+    //         console.log(location.coords.latitude);
+    //         console.log(location.coords.longitude);
+    //       }
+    //     );
+    //   }
+    // } catch (error) {
+    //   console.log("Location:", error);
+    // }
 
     try {
       await SplashScreen.preventAutoHideAsync();

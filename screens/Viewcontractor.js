@@ -21,9 +21,7 @@ import { Icon } from "../components/";
 import { AntDesign, MaterialIcons, Ionicons, Entypo } from "@expo/vector-icons";
 
 import DynamicTaskData, {
- 
   requestPanel2Model,
- 
   requetActivityActionModel,
   UserReadStatusModel,
 } from "../Data/DynamicTaskData";
@@ -77,8 +75,8 @@ export default class Viewcontractor extends React.Component {
       panelNoRowSelect: false,
       isMessageDetailShow: false,
       TypeId: 0,
-      metaData:null,
-      displayColumn:null
+      metaData: null,
+      displayColumn: null,
     };
   }
 
@@ -90,7 +88,6 @@ export default class Viewcontractor extends React.Component {
       if (this.props.route.params.GroupAppID)
         this.setState({ groupAppID: this.props.route.params.GroupAppID });
       else this.setState({ groupAppID: 0 });
-
     });
   }
   clearfilter() {
@@ -98,8 +95,6 @@ export default class Viewcontractor extends React.Component {
     this.loadData("");
   }
   loadData = async (type) => {
-   
-    
     let isConnected = true;
     NetInfo.addEventListener((networkState) => {
       console.log("Connection type - ", networkState.type);
@@ -110,48 +105,43 @@ export default class Viewcontractor extends React.Component {
     let data = null;
     let pageData = this.props.route.params.pageData;
     let taskItem = this.props.route.params.taskItem;
-    
+
     this.setState({ loading: true });
-    
+
     let objData = DynamicTaskData.getInstance();
     let commonData = CommonDataManager.getInstance();
     let metaData = commonData.getServceNodeMetaData();
-    
-    metaData = metaData?._z.filter(e=>e.ActivityServiceNodeType ==taskItem.ServiceNodeTypeID);
-    
-    if(metaData && metaData.length >0)
-    {
-        requestPanel2Model.ReportID = metaData[0].Panel2ReportID;
-        requestPanel2Model.DataSetName = metaData[0].Panel2SPName;
-        requestPanel2Model.GroupAppId = this.props.route.params.GroupAppId;
-        requestPanel2Model.ModuleID= this.props.route.params.pageData.ModuleID;
-        requestPanel2Model.RowID = this.props.route.params.taskItem.RowID;
 
+    metaData = metaData?._z.filter(
+      (e) => e.ActivityServiceNodeType == taskItem.ServiceNodeTypeID
+    );
+
+    if (metaData && metaData.length > 0) {
+      requestPanel2Model.ReportID = metaData[0].Panel2ReportID;
+      requestPanel2Model.DataSetName = metaData[0].Panel2SPName;
+      requestPanel2Model.GroupAppId = this.props.route.params.GroupAppId;
+      requestPanel2Model.ModuleID = this.props.route.params.pageData.ModuleID;
+      requestPanel2Model.RowID = this.props.route.params.taskItem.RowID;
     }
-   
+
     this.setState({ loading: true });
     data = objData.getDynamicViewContractorListData(
       this.props.route.params.pageData.GroupAppID,
       (result) => {
         this.setState({ loading: false });
         if (result != null) {
-         
-         this.setState({actions:this.props.route.params.actions});
-         this.setState({metaData:result.TaskList.MetaData});
-         this.setState({metaData:result.TaskList.DisplayColumJson});
-       
-       
-        this.setState({ loading: false });
-        this.setState({ taskData: result.TaskList.QueryData });
-        this.setState({ taskfullData: result.TaskList.QueryData });
+          this.setState({ actions: this.props.route.params.actions });
+          this.setState({ metaData: result.TaskList.MetaData });
+          this.setState({ metaData: result.TaskList.DisplayColumJson });
 
+          this.setState({ loading: false });
+          this.setState({ taskData: result.TaskList.QueryData });
+          this.setState({ taskfullData: result.TaskList.QueryData });
         } else this.setState({ loading: false });
         //return taskdata;
       }
     );
-   
   };
- 
 
   async getActions(item, pageData) {
     let objData = DynamicTaskData.getInstance();
@@ -159,8 +149,6 @@ export default class Viewcontractor extends React.Component {
     console.log(pageData);
     //this.setState({actions:data});
   }
-
-
 
   handleSearch = async (text) => {
     //alert(text);
@@ -260,6 +248,12 @@ export default class Viewcontractor extends React.Component {
 
   handleLeftPress = () => {
     const { back, navigation } = this.props;
+    // this.props.navigation.navigate("Tasks", {
+    //   comefromContractor: true,
+    //   onGoBack: () => {
+    //     this.refresh();
+    //   },
+    // });
     navigation.goBack();
   };
   renderNavigation = () => {
@@ -295,7 +289,7 @@ export default class Viewcontractor extends React.Component {
                   color: scheme === "dark" ? "white" : "black",
                 }}
               >
-              Contractor List
+                Contractor List
               </Text>
             </Block>
           }
@@ -314,14 +308,12 @@ export default class Viewcontractor extends React.Component {
               </TouchableOpacity>
             </Block>
           }
-           titleStyle={[
+          titleStyle={[
             styles.title,
             { color: theme.COLORS[white ? "WHITE" : "ICON"] },
           ]}
           right={
             <Block flex row style={[styles.searchbutton]}>
-             
-             
               <TouchableOpacity onPress={() => this.showSearch()}>
                 <Icon
                   size={21}
@@ -331,13 +323,10 @@ export default class Viewcontractor extends React.Component {
                   color={scheme === "dark" ? "white" : theme.COLORS["ICON"]}
                 />
               </TouchableOpacity>
-          
-          
-             
-             
+
               <TouchableOpacity
                 style={{ paddingLeft: 5, paddingRight: 15 }}
-                onPress={() => this.loadData('')}
+                onPress={() => this.loadData("")}
               >
                 <Ionicons
                   size={21}
@@ -348,13 +337,11 @@ export default class Viewcontractor extends React.Component {
               </TouchableOpacity>
             </Block>
           }
-          
         />
         {this.state.isSearchShow ? this.renderHeader() : null}
       </Block>
     );
   };
- 
 
   hideaction = async () => {
     this.setState({ isActionVisible: false });
@@ -363,45 +350,25 @@ export default class Viewcontractor extends React.Component {
     this.setState({ isActionVisible: true });
   };
 
-  
-
   setTaskModel = async (item, index, isexpend) => {
     try {
       let commonData = CommonDataManager.getInstance();
       console.log("Item data", JSON.stringify(item));
-     
-      
-        //why we need this data parse here?
-        let taskKeyValue = [];
-        //alert(JSON.stringify(finalData));
-        let fields = this.state.DisplayColumJson;
-        if (fields) {
-         
-          let selectedFields = (fields + ",").split(",");
-          //alert(selectedFields.length);
-          for (var key in item) {
-            if (
-              !key.endsWith("ID") &&
-              !key.endsWith("id") &&
-              !key.endsWith("...")
-            ) {
-              if (selectedFields.includes(key)) {
-                let taskValue = {};
-                taskValue.Key = key;
-                taskValue.Value = item[key];
-                taskKeyValue.push(taskValue);
-              }
-            }
-          }
 
-        } else {
-          for (var key in item) {
-            if (
-              !key.endsWith("ID") &&
-              !key.endsWith("id") &&
-              !key.endsWith("...") &&
-              !key.endsWith("Title")
-            ) {
+      //why we need this data parse here?
+      let taskKeyValue = [];
+      //alert(JSON.stringify(finalData));
+      let fields = this.state.DisplayColumJson;
+      if (fields) {
+        let selectedFields = (fields + ",").split(",");
+        //alert(selectedFields.length);
+        for (var key in item) {
+          if (
+            !key.endsWith("ID") &&
+            !key.endsWith("id") &&
+            !key.endsWith("...")
+          ) {
+            if (selectedFields.includes(key)) {
               let taskValue = {};
               taskValue.Key = key;
               taskValue.Value = item[key];
@@ -409,33 +376,43 @@ export default class Viewcontractor extends React.Component {
             }
           }
         }
+      } else {
+        for (var key in item) {
+          if (
+            !key.endsWith("ID") &&
+            !key.endsWith("id") &&
+            !key.endsWith("...") &&
+            !key.endsWith("Title")
+          ) {
+            let taskValue = {};
+            taskValue.Key = key;
+            taskValue.Value = item[key];
+            taskKeyValue.push(taskValue);
+          }
+        }
+      }
 
-        // if(this.props.route.params.ismsg == true)
-        // this.setState({MsgDetailKeyValue : taskKeyValue});
-        // else
-        this.setState({ TaskDetailKeyValue: taskKeyValue });
-     
-        
-        this.setState({
-          taskData: this.state.taskData.map((item) => {
-            item.isExpand = false;
-            return item;
-          }),
-        });
+      // if(this.props.route.params.ismsg == true)
+      // this.setState({MsgDetailKeyValue : taskKeyValue});
+      // else
+      this.setState({ TaskDetailKeyValue: taskKeyValue });
 
-        let targetPost = this.state.taskData[index];
-        targetPost.isExpand = isexpend;
-        this.state.taskData[index] = targetPost;
-        var updatedTask = this.state.taskData;
-        //Loader.isLoading = false;
-        //this.setState({loading:false});
-        this.setState({
-          taskData: updatedTask,
-        });
-       
-        
-    
-     
+      this.setState({
+        taskData: this.state.taskData.map((item) => {
+          item.isExpand = false;
+          return item;
+        }),
+      });
+
+      let targetPost = this.state.taskData[index];
+      targetPost.isExpand = isexpend;
+      this.state.taskData[index] = targetPost;
+      var updatedTask = this.state.taskData;
+      //Loader.isLoading = false;
+      //this.setState({loading:false});
+      this.setState({
+        taskData: updatedTask,
+      });
     } catch (e) {
       //Loader.isLoading = false;
       this.setState({ loading: false });
@@ -450,17 +427,18 @@ export default class Viewcontractor extends React.Component {
   }
   movescreen() {
     let item = this.props.route.params.taskItem;
-   
+
     const { navigation } = this.props;
     this.props.route.params.taskId = this.props.route.params.taskDetail.RowID;
-      this.props.route.params.StatusID = this.props.route.params.taskDetail.StatusID;
-      navigation.navigate("TaskDetail", {
-        pageData: this.props.route.params.pageData,
-        taskData: this.props.route.params.taskDetail,
-        item: item,
-        isfrommsg:false,
-        iscontractor: true,
-      });
+    this.props.route.params.StatusID =
+      this.props.route.params.taskDetail.StatusID;
+    navigation.navigate("TaskDetail", {
+      pageData: this.props.route.params.pageData,
+      taskData: this.props.route.params.taskDetail,
+      item: item,
+      isfrommsg: false,
+      iscontractor: true,
+    });
   }
   setAction = async (actions) => {
     items = this.props.route.params.taskItem;
@@ -619,26 +597,27 @@ export default class Viewcontractor extends React.Component {
       else if (priority.indexOf("Waiting quote") > -1) color = "#ffe181";
       else if (priority.indexOf("Quote Saved") > -1) color = "#33FFDD";
       else if (priority.indexOf("Waiting serviceman") > -1) color = "#33FF64";
-      else if (priority.indexOf("Waiting bid acceptance") > -1) color = "#FFBB33";
-      else if (priority.indexOf("Waiting client approval") > -1) color = "#FF5B33";
+      else if (priority.indexOf("Waiting bid acceptance") > -1)
+        color = "#FFBB33";
+      else if (priority.indexOf("Waiting client approval") > -1)
+        color = "#FF5B33";
       else if (priority.indexOf("Waiting verification") > -1) color = "#33C1FF";
       else if (priority.indexOf("Out of service") > -1) color = "#4C33FF";
       else if (priority.indexOf("Cancelled") > -1) color = "#E633FF";
       else if (priority.indexOf("Inactive") > -1) color = "#FF3390";
-      
     }
     return color;
   }
   renderItem = ({ item, index }) => {
     const { navigation } = this.props;
     //colors[index % colors.length]
-   
+
     let colors = ["#FD0527", "#051CFD", "#FDD405", "#23FD05"];
     return (
       <Block>
         <Block card shadow style={styles.product}>
           <Block row>
-          <View
+            <View
               style={{
                 backgroundColor: this.getColorcode(item.Status),
                 alignItems: "center",
@@ -761,7 +740,7 @@ export default class Viewcontractor extends React.Component {
                         marginBottom: 10,
                       }}
                     />
-                     <View>
+                    <View>
                       <Block style={styles.actioncontainer}>
                         <Block style={styles.item}>
                           <Button
@@ -785,10 +764,8 @@ export default class Viewcontractor extends React.Component {
                             Open
                           </Button>
                         </Block>
-                       
-                       
                       </Block>
-                    </View> 
+                    </View>
 
                     <View style={{ flex: 1 }}>
                       <Modal
@@ -867,7 +844,6 @@ export default class Viewcontractor extends React.Component {
                         marginBottom: 10,
                       }}
                     />
-                   
 
                     <Block visible={this.state.loading}>
                       {this.state.TaskDetailKeyValue
@@ -932,11 +908,7 @@ export default class Viewcontractor extends React.Component {
                         : null}
                     </Block>
                   </Block>
-                  <Block row flex style={{ paddingBottom: 7 }}>
-                   
-                   
-
-                  </Block>
+                  <Block row flex style={{ paddingBottom: 7 }}></Block>
                 </Block>
               )}
             </Block>

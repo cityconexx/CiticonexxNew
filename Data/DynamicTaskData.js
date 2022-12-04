@@ -13,6 +13,21 @@ export const requetActivityModel = {
   GroupAppID: 0,
   AccessLevelID: 0,
 };
+export const requestTaskDocumentSaveModel = {
+  SignedInUserId: 0,
+  UserId: 0,
+  ClientId: 0,
+  TaskID: 0,
+  Documents: "",
+  AttachmentFileName: "",
+  OriginalFileName: "",
+  Size: 0,
+  Image: "",
+  StartDate: "",
+  TimeZone: "",
+  UTCOffSet: 0,
+  LastUpdatedDate: null,
+};
 export const requetActivityActionModel = {
   SignedInUserID: 0,
   UserID: 0,
@@ -128,15 +143,14 @@ export const requestPanel2Model = {
   UserID: 0,
   ClientId: 0,
   ClientID: 0,
-  DataSetName : '',
-  GroupAppId : 0,
+  DataSetName: "",
+  GroupAppId: 0,
   GroupAppsList: [],
-  ModuleID : 0,
-  ReportID : 0,
-  ReturnReportMetaData : true,
-  RowID : 0,
-
-}
+  ModuleID: 0,
+  ReportID: 0,
+  ReturnReportMetaData: true,
+  RowID: 0,
+};
 export const requestModel = {
   AssignedToUserID: 0,
   SignedInUserId: 0,
@@ -799,21 +813,18 @@ export default class DynamicTaskData {
     let clientDetail = await commonData.getClientDetail();
     let clientAppData = await commonData.getClientAppData();
     let moduleData = await commonData.getModuleDetail();
-   
 
     let groupAppList = clientAppData.filter(
       (e) => e.ClientAppID == requestModel.ClientAppID
     )[0].GroupAppsList;
     groupAppList = groupAppList.split(",");
-  
+
     requestPanel2Model.SignedInUserId = userData.SignedInUserId;
     requestPanel2Model.UserId = userData.UserId;
     requestPanel2Model.ClientId = clientDetail.ClientID;
     requestPanel2Model.SignedInUserID = userData.SignedInUserId;
     requestPanel2Model.UserID = userData.UserId;
     requestPanel2Model.ClientID = clientDetail.ClientID;
-
-    
 
     if (groupAppID && groupAppID > 0) {
       requestPanel2Model.GroupAppsList.push(parent(groupAppID));
@@ -824,14 +835,13 @@ export default class DynamicTaskData {
       if (groupAppList.length > 1) {
         //
       } else {
-      requestPanel2Model.GroupAppId = +groupAppList[0];
+        requestPanel2Model.GroupAppId = +groupAppList[0];
       }
     }
-  
+
     console.log(requestPanel2Model);
     this._TaskData = null;
     const onSuccess = async ({ data }) => {
-      
       if (
         (data.Result.ErrorMessage != "" && data.Result.ErrorMessage != null) ||
         data.Result.Errors.length > 0
@@ -845,7 +855,7 @@ export default class DynamicTaskData {
       }
       //alert(JSON.stringify(data));
       this._TaskData = data.Result;
-       
+
       ontasksuccess(this._TaskData);
     };
 
@@ -867,5 +877,63 @@ export default class DynamicTaskData {
       .catch(onFailure);
 
     //return this._TaskData;
+  }
+
+  async SaveDocument(
+    taskIds,
+    image,
+    attachmentFileName,
+    originalFileName,
+    ontasksave,
+    onError
+  ) {
+    //alert('funciton calling');
+    let commonData = CommonDataManager.getInstance();
+    let userData = await commonData.getUserDetail();
+    let clientDetail = await commonData.getClientDetail();
+    //alert(JSON.stringify(clientDetail));
+
+    requestTaskDocumentSaveModel.SignedInUserId = userData.SignedInUserId;
+    requestTaskDocumentSaveModel.UserId = userData.UserId;
+    requestTaskDocumentSaveModel.ClientId = clientDetail.ClientID;
+    requestTaskDocumentSaveModel.TaskID = taskIds;
+    requestTaskDocumentSaveModel.Image = image;
+    requestTaskDocumentSaveModel.AttachmentFileName = attachmentFileName;
+    requestTaskDocumentSaveModel.OriginalFileName = originalFileName;
+    requestTaskDocumentSaveModel.UTCOffSet = clientDetail.UTCOffset;
+    requestTaskDocumentSaveModel.TimeZone = clientDetail.Timezone;
+
+    console.log("request model", JSON.stringify(requestTaskDocumentSaveModel));
+    const onSuccess = ({ data }) => {
+      //alert(JSON.stringify(data));
+      if (
+        (data.Result.ErrorMessage != "" && data.Result.ErrorMessage != null) ||
+        data.Result.Errors.length > 0
+      ) {
+        alert(
+          data.Result.ErrorMessage
+            ? data.Result.ErrorMessage
+            : data.Result.Errors[0]
+        );
+        ontasksave(data);
+      }
+      this._SaveTaskResponse = data;
+      ontasksave(data);
+      //database.DeleteSaveTaskDataAsync(timestamp);
+    };
+
+    const onFailure = (error) => {
+      udatabase.addlog(
+        "save document api called failed" +
+          JSON.stringify(requestTaskDocumentSaveModel)
+      );
+      console.log(error && error.response);
+      onError(error);
+    };
+
+    baseAPI
+      .post("Task/SetTaskDocuments/", requestTaskDocumentSaveModel)
+      .then(onSuccess)
+      .catch(onFailure);
   }
 }

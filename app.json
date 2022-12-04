@@ -21,7 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cityconexx.cityconexxapp",
-      "buildNumber": "1.0.67",
+      "buildNumber": "1.0.75",
       "infoPlist": {
         "UIBackgroundModes": [
           "location",
@@ -30,8 +30,8 @@
       }
     },
     "android": {
-      "package": "com.cityconexxApp.cityconexxapp",
-      "versionCode": 5,
+      "package": "com.cityconexx.cityconexxapp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
