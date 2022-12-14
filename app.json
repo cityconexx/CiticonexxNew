@@ -3,7 +3,7 @@
     "name": "CityConexxApp",
     "description": "Cityconexx App",
     "slug": "CityConexxApp",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -21,13 +21,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cityconexx.cityconexxapp",
-      "buildNumber": "1.0.75",
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "location",
-          "fetch"
-        ]
-      }
+      "buildNumber": "1.0.76"
+      
     },
     "android": {
       "package": "com.cityconexx.cityconexxapp",

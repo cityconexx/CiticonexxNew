@@ -13,6 +13,16 @@ export const requetActivityModel = {
   GroupAppID: 0,
   AccessLevelID: 0,
 };
+export const TaskDocumentRequestModel = {
+  SignedInUserID: 0,
+  UserID: 0,
+  ClientID: 0,
+  TaskID:0,
+  Image: '',
+  OriginalFileName : '',
+  AttachmentFileName : '',
+};
+
 export const requestTaskDocumentSaveModel = {
   SignedInUserId: 0,
   UserId: 0,
@@ -806,6 +816,128 @@ export default class DynamicTaskData {
       .catch(onFailure);
   };
 
+  async SaveDocument(
+    taskIds,
+    image,
+    attachmentFileName,
+    originalFileName,
+    ontasksave,
+    onError
+  ) {
+    //alert('funciton calling');
+    let commonData = CommonDataManager.getInstance();
+    let userData = await commonData.getUserDetail();
+    let clientDetail = await commonData.getClientDetail();
+    //alert(JSON.stringify(clientDetail));
+
+    requestTaskDocumentSaveModel.SignedInUserId = userData.SignedInUserId;
+    requestTaskDocumentSaveModel.UserId = userData.UserId;
+    requestTaskDocumentSaveModel.ClientId = clientDetail.ClientID;
+    requestTaskDocumentSaveModel.TaskID = taskIds;
+    requestTaskDocumentSaveModel.Image = image;
+    requestTaskDocumentSaveModel.AttachmentFileName = attachmentFileName;
+    requestTaskDocumentSaveModel.OriginalFileName = originalFileName;
+    requestTaskDocumentSaveModel.UTCOffSet = clientDetail.UTCOffset;
+    requestTaskDocumentSaveModel.TimeZone = clientDetail.Timezone;
+
+    console.log("request model", JSON.stringify(requestTaskDocumentSaveModel));
+    const onSuccess = ({ data }) => {
+      //alert(JSON.stringify(data));
+      if (
+        (data.Result.ErrorMessage != "" && data.Result.ErrorMessage != null) ||
+        data.Result.Errors.length > 0
+      ) {
+        alert(
+          data.Result.ErrorMessage
+            ? data.Result.ErrorMessage
+            : data.Result.Errors[0]
+        );
+        ontasksave(data);
+      }
+      this._SaveTaskResponse = data;
+      ontasksave(data);
+      //database.DeleteSaveTaskDataAsync(timestamp);
+    };
+
+    const onFailure = (error) => {
+      udatabase.addlog(
+        "save document api called failed" +
+          JSON.stringify(requestTaskDocumentSaveModel)
+      );
+      console.log(error && error.response);
+      onError(error);
+    };
+
+    baseAPI
+      .post("Task/SetTaskDocuments/", requestTaskDocumentSaveModel)
+      .then(onSuccess)
+      .catch(onFailure);
+  }
+  async SetTaskDocuments(ondocsavesucess){
+    let commonData = CommonDataManager.getInstance();
+    let userData = await commonData.getUserDetail(); 
+    let clientDetail = await commonData.getClientDetail();
+    TaskDocumentRequestModel.SignedInUserId = userData.SignedInUserId;
+    TaskDocumentRequestModel.UserId = userData.UserId;
+    TaskDocumentRequestModel.ClientId = clientDetail.ClientID;
+    TaskDocumentRequestModel.SignedInUserID = userData.SignedInUserId;
+    TaskDocumentRequestModel.UserID = userData.UserId;
+    TaskDocumentRequestModel.ClientID = clientDetail.ClientID;
+
+    
+    console.log(TaskDocumentRequestModel);
+    this._TaskData = null;
+    const onSuccess = async ({ data }) => {
+     
+      ondocsavesucess(data.Result);
+    };
+
+    const onFailure = (error) => {
+      //alert('failed');
+      //alert(JSON.stringify(error.response));
+      console.log(error && error.response);
+     
+      this.setState({ isLoading: false });
+      ondocsavesucess(null);
+    };
+
+    await baseAPI
+      .post("Task/SetTaskDocuments/", TaskDocumentRequestModel)
+      .then(onSuccess)
+      .catch(onFailure);
+  }
+  async getDynamicTaskDocumentListData(ondocsuccess) {
+    let commonData = CommonDataManager.getInstance();
+    let userData = await commonData.getUserDetail(); 
+    let clientDetail = await commonData.getClientDetail();
+    TaskDocumentRequestModel.SignedInUserId = userData.SignedInUserId;
+    TaskDocumentRequestModel.UserId = userData.UserId;
+    TaskDocumentRequestModel.ClientId = clientDetail.ClientID;
+    TaskDocumentRequestModel.SignedInUserID = userData.SignedInUserId;
+    TaskDocumentRequestModel.UserID = userData.UserId;
+    TaskDocumentRequestModel.ClientID = clientDetail.ClientID;
+
+    
+    console.log(TaskDocumentRequestModel);
+    this._TaskData = null;
+    const onSuccess = async ({ data }) => {
+      ondocsuccess(data.Result.Documents);
+    };
+
+    const onFailure = (error) => {
+      //alert('failed');
+      //alert(JSON.stringify(error.response));
+      console.log(error && error.response);
+     
+      this.setState({ isLoading: false });
+      ondocsuccess(null);
+    };
+
+    await baseAPI
+      .post("Task/GetTaskDocuments/", TaskDocumentRequestModel)
+      .then(onSuccess)
+      .catch(onFailure);
+  }
   async getDynamicViewContractorListData(groupAppID, ontasksuccess) {
     //alert(groupAppID);
     let commonData = CommonDataManager.getInstance();
@@ -879,61 +1011,5 @@ export default class DynamicTaskData {
     //return this._TaskData;
   }
 
-  async SaveDocument(
-    taskIds,
-    image,
-    attachmentFileName,
-    originalFileName,
-    ontasksave,
-    onError
-  ) {
-    //alert('funciton calling');
-    let commonData = CommonDataManager.getInstance();
-    let userData = await commonData.getUserDetail();
-    let clientDetail = await commonData.getClientDetail();
-    //alert(JSON.stringify(clientDetail));
-
-    requestTaskDocumentSaveModel.SignedInUserId = userData.SignedInUserId;
-    requestTaskDocumentSaveModel.UserId = userData.UserId;
-    requestTaskDocumentSaveModel.ClientId = clientDetail.ClientID;
-    requestTaskDocumentSaveModel.TaskID = taskIds;
-    requestTaskDocumentSaveModel.Image = image;
-    requestTaskDocumentSaveModel.AttachmentFileName = attachmentFileName;
-    requestTaskDocumentSaveModel.OriginalFileName = originalFileName;
-    requestTaskDocumentSaveModel.UTCOffSet = clientDetail.UTCOffset;
-    requestTaskDocumentSaveModel.TimeZone = clientDetail.Timezone;
-
-    console.log("request model", JSON.stringify(requestTaskDocumentSaveModel));
-    const onSuccess = ({ data }) => {
-      //alert(JSON.stringify(data));
-      if (
-        (data.Result.ErrorMessage != "" && data.Result.ErrorMessage != null) ||
-        data.Result.Errors.length > 0
-      ) {
-        alert(
-          data.Result.ErrorMessage
-            ? data.Result.ErrorMessage
-            : data.Result.Errors[0]
-        );
-        ontasksave(data);
-      }
-      this._SaveTaskResponse = data;
-      ontasksave(data);
-      //database.DeleteSaveTaskDataAsync(timestamp);
-    };
-
-    const onFailure = (error) => {
-      udatabase.addlog(
-        "save document api called failed" +
-          JSON.stringify(requestTaskDocumentSaveModel)
-      );
-      console.log(error && error.response);
-      onError(error);
-    };
-
-    baseAPI
-      .post("Task/SetTaskDocuments/", requestTaskDocumentSaveModel)
-      .then(onSuccess)
-      .catch(onFailure);
-  }
+  
 }

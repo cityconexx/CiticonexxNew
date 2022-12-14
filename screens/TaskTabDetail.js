@@ -21,6 +21,7 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import AddTaskScreen from "./AddTask";
 import TaskMessages from "./TaskMessages";
 import QuoteScreen from "./quotes/AddQuotes";
+import DocumentUpload from "./DocumentUpload";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -135,12 +136,12 @@ export default class TaskTabDetail extends React.Component {
             name="Messages"
             children={() => <TaskMessages {...this.props} />}
           />
-          {/* {this.props.route.params.taskData != null ? (
+          {this.props.route.params.taskData != null ? (
             <Tab.Screen
               name="Document"
               children={() => <DocumentUpload {...this.props} />}
             />
-          ) : null} */}
+          ) : null}
         </Tab.Navigator>
       </>
     );

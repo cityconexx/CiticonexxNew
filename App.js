@@ -35,7 +35,7 @@ import * as SplashScreen from "expo-splash-screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Camera } from "expo-camera";
-import * as Location from "expo-location";
+
 const BACKGROUND_FETCH_TASK = "background-fetch";
 const assetImages = [Images.Profile, Images.Avatar];
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {

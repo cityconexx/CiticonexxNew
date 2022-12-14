@@ -711,7 +711,7 @@ const saveTaskCategoryToLocal = async (groupAppId, json) => {
             console.log("table task category delete record error");
           }
         );
-        json.map((item) => {
+        json?.map((item) => {
           console.log("item inserted " + groupAppId + " = " + item.ID);
           tx.executeSql(
             "insert into tabletaskCategory (group_id, server_id, category_text, items) values (?,?,?,?)",

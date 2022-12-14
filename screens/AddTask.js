@@ -41,6 +41,7 @@ import { database } from "../OfflineData/TaskSyncData";
 
 import Spinner from "react-native-loading-spinner-overlay";
 import { MaterialIcons } from "@expo/vector-icons";
+import * as Location from "expo-location"
 // import {
 //   RichTextEditor,
 //   RichTextViewer,
@@ -72,7 +73,7 @@ export default class AddTask extends React.Component {
       Description: "",
       selectedCategory: "",
       TaskName: "",
-      value: "",
+      value: "<div></div>",
       ActivityTypeID: 0,
       ActivityTypeTaskID: 0,
       TaskID: 0,
@@ -137,6 +138,20 @@ export default class AddTask extends React.Component {
   };
 
   async componentDidMount() {
+
+    let isTaskEditMode = this.props.route.params.taskData ? true : false;
+    if(isTaskEditMode){
+        let desc = this.props.route.params.taskData.Description.startsWith("<div>")
+          ? this.props.route.params.taskData.Description
+          : "<div>" + this.props.route.params.taskData.Description + "</div>";
+       
+        this.setState({
+          value: desc //convertToObject(desc, this.customStyles),
+        });
+        this.setState({ TaskName: this.props.route.params.taskData.Title });
+  }
+
+
     this._unsubscribe = this.props.navigation.addListener("focus", () => {
       AsyncStorage.getItem("selectedCategory").then((result) => {
         //alert(result)
@@ -156,6 +171,24 @@ export default class AddTask extends React.Component {
       });
     });
 
+    const foregroundPermission = await Location.requestForegroundPermissionsAsync();
+   
+    // if (foregroundPermission.status !== 'granted') {
+    //   setErrorMsg('Permission to access location was denied');
+    //   return;
+    // }
+    
+    if(foregroundPermission.status == 'granted'){
+      
+      let location = await Location.getCurrentPositionAsync({});
+      this.setState({lat:location.coords.latitude});
+      this.setState({long:location.coords.longitude});
+      //alert(JSON.stringify(location.coords.latitude));
+      //alert(JSON.stringify(location.coords.longitude));
+    }
+    // Location subscription in the global scope
+    
+
     let isConnected = false;
     NetInfo.addEventListener((networkState) => {
       console.log("Connection type - ", networkState.type);
@@ -164,7 +197,7 @@ export default class AddTask extends React.Component {
     });
     //alert(JSON.stringify(this.props.route.params.taskData));
     let dlldata = null;
-    let isTaskEditMode = this.props.route.params.taskData ? true : false;
+    
 
     if (isConnected) {
       // let objData = DynamicTaskData.getInstance();
@@ -210,7 +243,16 @@ export default class AddTask extends React.Component {
       //alert(JSON.stringify(data));
     }
   }
+  async onEditorInitialized()
+  {
+    let desc = this.props.route.params?.taskData?.Description.startsWith("<div>")
+    ? this.props.route.params.taskData.Description
+    : "<div>" + this.props.route.params?.taskData?.Description + "</div>";
 
+  this.setState({
+    value: desc, //convertToObject(desc, this.customStyles),
+  });
+  }
   loadEditData = async () => {
     let _selectedCategory =
       this.props.route.params.taskData.CategoryDesc +
@@ -551,6 +593,7 @@ export default class AddTask extends React.Component {
   async accessCamera() {
     this.setState({ isCapturing: true });
   }
+ 
   renderProducts = (scene) => {
     const { back, title, white, transparent, navigation } = this.props;
     const noShadow = ["Search", "Profile"];
@@ -720,13 +763,16 @@ export default class AddTask extends React.Component {
     return (
       <View>
         {!this.state.isCapturing ? (
-          <View>
+          <View onPress={Keyboard.dismiss}>
+           
             {this.props.route.params.isfrommsg != true &&
             this.props.route.params.iscontractor != true ? (
               <Block style={styles.shadow}>{this.renderNavigation()}</Block>
             ) : null}
             <Toast></Toast>
-            <ScrollView contentContainerStyle={styles.products}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView height="100%"  scrollEventThrottle={16} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled"   contentContainerStyle={styles.products}  onScroll={Keyboard.dismiss}>
+            
               <Block flex style={{ paddingLeft: 30, paddingTop: 15 }}>
                 <Text
                   size={18}
@@ -815,40 +861,20 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         justifyContent: "flex-end",
                       }}
                     >
-                      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                   
                         <View style={styles.main}>
-                          {/* <CNRichTextEditor
-                            ref={(input) => (this.editor = input)}
-                            value={this.state.value}
-                            style={{ backgroundColor: "#fff" }}
-                            styleList={defaultStyles}
-                            onValueChanged={this.onValueChanged}
-                          /> */}
-
-                          {/* <RichTextEditor
-                            minHeight={150}
-                            value={this.state.value}
-                            selectionColor="green"
-                            actionMap={this.getActionMap()}
-                            onValueChange={this.onValueChanged}
-                            toolbarStyle={styles.toolbar}
-                            editorStyle={styles.editor}
-                          />
-                          
-
-                          <RichTextViewer
-                            value={this.state.value}
-                            editorStyle={styles.viewer}
-                            linkStyle={styles.link}
-                          /> */}
+                       
+                        
+                        
                           <SafeAreaView>
-                            <ScrollView>
+                           
                               <KeyboardAvoidingView
                                 behavior={
                                   Platform.OS === "ios" ? "padding" : "height"
                                 }
                                 style={{ flex: 1 }}
                               >
+                                  
                                 <RichToolbar
                                   editor={this.editor}
                                   actions={[
@@ -868,143 +894,54 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                                     ),
                                   }}
                                 />
+                                
+                            <ScrollView onScroll={Keyboard.dismiss} 
+  nestedScrollEnabled={true}
+  style={{flex: 1, height: 150}}>
+     {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss} 
+                          accessible={false}> */}
                                 <RichEditor
                                   ref={this.editor}
                                   scrollEnabled={true}
+                                  showSoftInputOnFocus={false}
+                                  initialContentHTML={this.state.value}
                                   value={this.state.value}
+                                  onPress={Keyboard.dismiss} 
                                   editorStyle={{
                                     contentCSSText: `position: absolute; 
             top: 0; right: 0; bottom: 0; left: 0;
             min-height: 100px; `,
                                   }}
-                                  initialFocus={false}
+                                  
                                   disabled={false}
+                                 
                                   onChange={(descriptionText) => {
                                     this.setState({
                                       value: descriptionText,
                                     });
                                   }}
                                 />
+                                {/* </TouchableWithoutFeedback> */}
+                                </ScrollView>
+                                
                               </KeyboardAvoidingView>
-                            </ScrollView>
+                           
                           </SafeAreaView>
+                      
+                      
                         </View>
-                      </TouchableWithoutFeedback>
+                      
 
-                      <View
-                        style={{
-                          minHeight: 45,
-                        }}
-                      >
-                        <View style={styles.toolbarContainer}>
-                          {/* <RichTextToolbar
-                            style={{
-                              height: 45,
-                            }}
-                            iconSetContainerStyle={{
-                              flexGrow: 1,
-                              justifyContent: "space-evenly",
-                              alignItems: "center",
-                            }}
-                            size={28}
-                            iconSet={[
-                              {
-                                type: "tool",
-                                iconArray: [
-                                  {
-                                    toolTypeText: "bold",
-                                    buttonTypes: "style",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-bold" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "italic",
-                                    buttonTypes: "style",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-italic" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "underline",
-                                    buttonTypes: "style",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-underline" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "lineThrough",
-                                    buttonTypes: "style",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-strikethrough-variant" />
-                                    ),
-                                  },
-                                ],
-                              },
-                              {
-                                type: "seperator",
-                              },
-                              {
-                                type: "tool",
-                                iconArray: [
-                                  {
-                                    toolTypeText: "body",
-                                    buttonTypes: "tag",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-text" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "title",
-                                    buttonTypes: "tag",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-header-1" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "heading",
-                                    buttonTypes: "tag",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-header-3" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "ul",
-                                    buttonTypes: "tag",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-list-bulleted" />
-                                    ),
-                                  },
-                                  {
-                                    toolTypeText: "ol",
-                                    buttonTypes: "tag",
-                                    iconComponent: (
-                                      <MaterialCommunityIcons name="format-list-numbered" />
-                                    ),
-                                  },
-                                ],
-                              },
-                              {
-                                type: "seperator",
-                              },
-                            ]}
-                            selectedTag={this.state.selectedTag}
-                            selectedStyles={this.state.selectedStyles}
-                            // onStyleKeyPress={this.onStyleKeyPress}
-                            backgroundColor="aliceblue" // optional (will override default backgroundColor)
-                            color="gray" // optional (will override default color)
-                            selectedColor="white" // optional (will override default selectedColor)
-                            selectedBackgroundColor="deepskyblue" // optional (will override default selectedBackgroundColor)
-                          /> */}
-                        </View>
-                      </View>
+                   
+                   
                     </KeyboardAvoidingView>
-
+                    
                     <TouchableOpacity
                       onPress={() => {
-                        this.setState({ showStartDate: true });
+                        this.setState({ showStartDate: true }); Keyboard.dismiss;
                       }}
                     >
+                     
                       <Input
                         bgColor="transparent"
                         placeholderTextColor={materialTheme.COLORS.PLACEHOLDER}
@@ -1015,7 +952,13 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         style={[styles.input]}
                         value={this.state.StartDate}
                         pointerEvents="none"
+                        onBlur={() =>  Keyboard.dismiss}
+                        onPress={() => {
+                          Keyboard.dismiss;
+                        }}
                       />
+                     
+                     
                     </TouchableOpacity>
                     <DateTimePickerModal
                       isVisible={this.state.showStartDate}
@@ -1023,11 +966,14 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                       onConfirm={handleConfirm}
                       onCancel={hideDatePicker}
                     />
+                  
 
                     {this.state.RowID > 0 ? (
                       <View style={{ flex: 1, flexDirection: "row" }}>
                         <View style={{ flex: 1 }}>
                           <Text
+                          onPress={()=>{Keyboard.dismiss}}
+                         
                             size={16}
                             style={{
                               textAlign: "left",
@@ -1050,6 +996,9 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                         }}
                         placeholderTextColor="red"
                         items={this.state.StatusItems}
+                        onPress={() => {
+                          Keyboard.dismiss;
+                        }}
                         onValueChange={(value) => {
                           this.setState({
                             TaskStatusID: value,
@@ -1074,6 +1023,9 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                       }}
                       style={pickerSelectStyles}
                       value={this.state.Priority}
+                      onPress={() => {
+                        Keyboard.dismiss;
+                      }}
                     />
                     <RNPickerSelect
                       disabled={this.setState.disabledlocation}
@@ -1091,6 +1043,9 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                       }}
                       style={pickerSelectStyles}
                       value={this.state.LocationID}
+                      onPress={() => {
+                        Keyboard.dismiss;
+                      }}
                     />
                     <RNPickerSelect
                       placeholder={{
@@ -1107,6 +1062,9 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                       }}
                       style={pickerSelectStyles}
                       value={this.state.AssignedToUserID}
+                      onPress={() => {
+                        Keyboard.dismiss;
+                      }}
                     />
 
                     <TouchableOpacity
@@ -1149,7 +1107,9 @@ onPress={() => this.props.navigation.navigate('TaskCategory', { pageData: this.p
                   </Block>
                 </Block>
               </Block>
+             
             </ScrollView>
+            </TouchableWithoutFeedback>
           </View>
         ) : (
           <View style={styles.container}>
@@ -1292,7 +1252,7 @@ const styles = StyleSheet.create({
   },
   products: {
     width: width - theme.SIZES.BASE * 0,
-    paddingVertical: theme.SIZES.BASE * 0,
+    //paddingVertical: theme.SIZES.BASE * 0,
   },
   notification: {
     paddingVertical: theme.SIZES.BASE / 3,

@@ -268,7 +268,8 @@ export default class Settings extends React.Component {
 const scheme = Appearance.getColorScheme();
 const styles = StyleSheet.create({
   settings: {
-    paddingVertical: theme.SIZES.BASE / 3,
+    paddingVertical: theme.SIZES.BASE / 1,
+    paddingTop:50
   },
   title: {
     paddingTop: theme.SIZES.BASE,

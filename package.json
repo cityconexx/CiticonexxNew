@@ -1,6 +1,6 @@
 {
   "name": "cityconexxapp",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Cityconexx",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
